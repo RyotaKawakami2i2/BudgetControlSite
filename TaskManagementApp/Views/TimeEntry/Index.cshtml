@@ -1,0 +1,190 @@
+@model IEnumerable<TaskManagementApp.Models.TimeEntry>
+
+@{
+    ViewData["Title"] = "作業時間記録";
+    var userRole = Context.Session.GetString("UserRole");
+}
+
+<div class="timeentry-index-bg">
+    <div class="container">
+        <div class="timeentry-index-container">
+            <div class="timeentry-index-header">
+                <div class="timeentry-index-title">
+                    <div class="timeentry-index-title-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    作業時間記録
+                </div>
+                <div class="timeentry-index-controls">
+                    @if (ViewBag.JobId != null)
+                    {
+                        <a asp-action="Create" asp-route-jobId="@ViewBag.JobId" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> 作業時間記録追加
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-action="Create" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> 作業時間記録追加
+                        </a>
+                    }
+                </div>
+            </div>
+            
+            @if (ViewBag.JobTitle != null)
+            {
+                <div class="job-info-banner">
+                    <i class="fas fa-tasks"></i>
+                    <span class="job-title">@ViewBag.JobTitle</span>
+                </div>
+            }
+            
+            <div class="timeentry-index-body">
+                @if (!Model.Any())
+                {
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="empty-title">作業時間記録がありません</div>
+                        <div class="empty-description">作業時間記録を追加して進捗を管理しましょう</div>
+                        @if (ViewBag.JobId != null)
+                        {
+                            <a asp-action="Create" asp-route-jobId="@ViewBag.JobId" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> 最初の記録を作成
+                            </a>
+                        }
+                        else
+                        {
+                            <a asp-action="Create" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> 最初の記録を作成
+                            </a>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <!-- 統計情報セクション -->
+                    <div class="summary-section">
+                        <div class="section-header">
+                            <i class="fas fa-chart-bar"></i>
+                            統計情報
+                        </div>
+                        <div class="section-body">
+                            <div class="summary-grid">
+                                <div class="summary-card">
+                                    <div class="summary-icon summary-icon-primary">
+                                        <i class="fas fa-hourglass-half"></i>
+                                    </div>
+                                    <div class="summary-content">
+                                        <div class="summary-label">総作業時間</div>
+                                        <div class="summary-value">@Model.Sum(e => e.ActualWorkHours).ToString("F1")時間</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="summary-card">
+                                    <div class="summary-icon summary-icon-warning">
+                                        <i class="fas fa-coffee"></i>
+                                    </div>
+                                    <div class="summary-content">
+                                        <div class="summary-label">総休憩時間</div>
+                                        <div class="summary-value">@Model.Sum(e => e.BreakTime).ToString("F1")時間</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="summary-card">
+                                    <div class="summary-icon summary-icon-success">
+                                        <i class="fas fa-list-ol"></i>
+                                    </div>
+                                    <div class="summary-content">
+                                        <div class="summary-label">記録件数</div>
+                                        <div class="summary-value">@Model.Count()件</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="summary-card">
+                                    <div class="summary-icon summary-icon-info">
+                                        <i class="fas fa-calendar-alt"></i>
+                                    </div>
+                                    <div class="summary-content">
+                                        <div class="summary-label">平均作業時間</div>
+                                        <div class="summary-value">@(Model.Any() ? (Model.Sum(e => e.ActualWorkHours) / Model.Count()).ToString("F1") : "0.0")時間</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 記録一覧セクション -->
+                    <div class="entries-section">
+                        <div class="section-header">
+                            <i class="fas fa-list"></i>
+                            記録一覧
+                        </div>
+                        <div class="section-body">
+                            <div class="timeentry-table">
+                                <div class="table-header">
+                                    <div class="table-row">
+                                        <div class="table-cell">日付</div>
+                                        <div class="table-cell">ジョブ</div>
+                                        <div class="table-cell">担当者</div>
+                                        <div class="table-cell">開始時間</div>
+                                        <div class="table-cell">終了時間</div>
+                                        <div class="table-cell">作業時間</div>
+                                        <div class="table-cell">休憩時間</div>
+                                        <div class="table-cell">実作業時間</div>
+                                        <div class="table-cell">作業内容</div>
+                                        <div class="table-cell">操作</div>
+                                    </div>
+                                </div>
+                                <div class="table-body">
+                                    @foreach (var entry in Model)
+                                    {
+                                        <div class="table-row">
+                                            <div class="table-cell">@entry.StartTime.ToString("yyyy/MM/dd")</div>
+                                            <div class="table-cell">
+                                                <a asp-controller="Job" asp-action="Details" asp-route-id="@entry.JobId" class="job-link">
+                                                    @entry.Job?.Title
+                                                </a>
+                                            </div>
+                                            <div class="table-cell">@entry.User?.Name</div>
+                                            <div class="table-cell">@entry.StartTime.ToString("HH:mm")</div>
+                                            <div class="table-cell">@entry.EndTime.ToString("HH:mm")</div>
+                                            <div class="table-cell">@((entry.EndTime - entry.StartTime).TotalHours.ToString("F1"))時間</div>
+                                            <div class="table-cell">@entry.BreakTime.ToString("F1")時間</div>
+                                            <div class="table-cell time-actual">@entry.ActualWorkHours.ToString("F1")時間</div>
+                                            <div class="table-cell">
+                                                @if (!string.IsNullOrEmpty(entry.WorkDescription))
+                                                {
+                                                    <span class="work-description" title="@entry.WorkDescription">
+                                                        @(entry.WorkDescription.Length > 30 ? entry.WorkDescription.Substring(0, 30) + "..." : entry.WorkDescription)
+                                                    </span>
+                                                }
+                                            </div>
+                                            <div class="table-cell">
+                                                <div class="action-buttons">
+                                                    <a asp-action="Edit" asp-route-id="@entry.Id" class="btn btn-action btn-edit" title="編集">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <form asp-action="Delete" asp-route-id="@entry.Id" method="post" style="display: inline;">
+                                                        <button type="submit" class="btn btn-action btn-delete" onclick="return confirm('この作業時間記録を削除しますか？');" title="削除">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+} 

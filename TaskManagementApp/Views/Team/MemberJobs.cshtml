@@ -1,0 +1,479 @@
+@model IEnumerable<TaskManagementApp.Models.Job>
+@{
+    ViewData["Title"] = "メンバー予定入力・進捗一覧";
+    var teamId = (int)ViewBag.TeamId;
+    var teamName = (string)ViewBag.TeamName;
+    var members = (IEnumerable<TaskManagementApp.Models.User>)ViewBag.Members;
+    int? selectedUserId = ViewBag.SelectedUserId as int?;
+}
+
+<style>
+    .member-jobs-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 0;
+        margin: -1.5rem -1.5rem 2rem -1.5rem;
+        border-radius: 0 0 2rem 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    .member-jobs-card {
+        background: white;
+        border-radius: 1.5rem;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        border: none;
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .member-jobs-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 1.5rem;
+        position: relative;
+    }
+
+    .member-jobs-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 50%, rgba(255,255,255,0.1) 100%);
+        pointer-events: none;
+    }
+
+    .member-jobs-body {
+        padding: 1.5rem;
+    }
+
+    .member-selector {
+        background: #f8f9fa;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border-left: 4px solid #667eea;
+    }
+
+    .member-selector-title {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .member-selector-icon {
+        width: 24px;
+        height: 24px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.75rem;
+    }
+
+    .form-group-enhanced {
+        margin-bottom: 1rem;
+        position: relative;
+    }
+
+    .form-label-enhanced {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-select-enhanced {
+        border: 2px solid #e9ecef;
+        border-radius: 1rem;
+        padding: 1rem 1rem 1rem 3rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: white;
+        background-image: none;
+    }
+
+    .form-select-enhanced:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+
+    .form-control-icon {
+        position: absolute;
+        left: 1rem;
+        top: 3.5rem;
+        color: #6c757d;
+        z-index: 10;
+    }
+
+    .btn-create-job {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        border: none;
+        border-radius: 2rem;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+    }
+
+    .btn-create-job:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(40, 167, 69, 0.6);
+        color: white;
+    }
+
+    .btn-back {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+        border: none;
+        border-radius: 2rem;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
+    }
+
+    .btn-back:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(108, 117, 125, 0.6);
+        color: white;
+    }
+
+    .jobs-table {
+        background: white;
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .jobs-table thead th {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 1rem;
+        font-weight: 600;
+        text-align: center;
+    }
+
+    .jobs-table tbody td {
+        padding: 1rem;
+        border-bottom: 1px solid #e9ecef;
+        vertical-align: middle;
+    }
+
+    .jobs-table tbody tr:hover {
+        background: #f8f9fa;
+    }
+
+    .status-badge {
+        border-radius: 2rem;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-align: center;
+        display: inline-block;
+        min-width: 80px;
+    }
+
+    .status-not-started {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+    }
+
+    .status-in-progress {
+        background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+        color: white;
+    }
+
+    .status-completed {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+    }
+
+    .priority-badge {
+        border-radius: 2rem;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-align: center;
+        display: inline-block;
+        min-width: 80px;
+    }
+
+    .priority-high {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+    }
+
+    .priority-medium {
+        background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+        color: white;
+    }
+
+    .priority-low {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        color: #dee2e6;
+        margin-bottom: 1rem;
+    }
+
+    .job-title {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.25rem;
+    }
+
+    .job-description {
+        color: #6c757d;
+        font-size: 0.875rem;
+        margin-bottom: 0;
+    }
+
+    .job-period {
+        color: #495057;
+        font-weight: 500;
+    }
+
+    .job-hours {
+        color: #667eea;
+        font-weight: 600;
+        text-align: center;
+    }
+
+    .member-stats {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        flex: 1;
+        margin: 0 0.5rem;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #667eea;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-weight: 500;
+    }
+
+    .alert-enhanced {
+        border-radius: 1rem;
+        border: none;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .alert-info-enhanced {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+    }
+
+    .alert-warning-enhanced {
+        background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+        color: white;
+    }
+
+    .alert-icon {
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+</style>
+
+<div class="member-jobs-hero">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="display-4 fw-bold mb-3">
+                    <i class="fas fa-tasks me-3"></i>@teamName - メンバー予定入力・進捗一覧
+                </h1>
+                <p class="lead mb-0">チームメンバーのジョブ進捗と予定を管理します</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a asp-action="Index" class="btn-back">
+                    <i class="fas fa-arrow-left"></i> チーム一覧に戻る
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="member-stats">
+        <div class="stat-card">
+            <div class="stat-number">@members.Count()</div>
+            <div class="stat-label">総メンバー数</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">@Model.Count()</div>
+            <div class="stat-label">総ジョブ数</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">@Model.Count(j => j.Status == "完了")</div>
+            <div class="stat-label">完了ジョブ数</div>
+        </div>
+    </div>
+
+    <div class="member-jobs-card">
+        <div class="member-jobs-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-user-cog me-2"></i>メンバー選択・ジョブ管理
+            </h5>
+        </div>
+        <div class="member-jobs-body">
+            <form method="get" asp-action="MemberJobs" class="member-selector">
+                <input type="hidden" name="teamId" value="@teamId" />
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-8">
+                        <div class="form-group-enhanced">
+                            <label for="userId" class="form-label-enhanced">
+                                <div class="member-selector-icon">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                メンバー選択
+                            </label>
+                            <i class="fas fa-user form-control-icon"></i>
+                            <select name="userId" id="userId" class="form-select-enhanced" onchange="this.form.submit()">
+                                <option value="">-- メンバーを選択 --</option>
+                                @foreach (var m in members)
+                                {
+                                    if (selectedUserId == m.Id)
+                                    {
+                                        <option value="@m.Id" selected="selected">@m.Name (@m.Email)</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@m.Id">@m.Name (@m.Email)</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    @if (selectedUserId != null)
+                    {
+                        <div class="col-md-4">
+                            <a asp-action="CreateMemberJob" asp-route-teamId="@teamId" asp-route-userId="@selectedUserId" class="btn-create-job w-100">
+                                <i class="fas fa-plus"></i> 新規ジョブ登録
+                            </a>
+                        </div>
+                    }
+                </div>
+            </form>
+
+            @if (selectedUserId == null)
+            {
+                <div class="alert-enhanced alert-info-enhanced">
+                    <i class="fas fa-info-circle alert-icon"></i>
+                    <div>
+                        <strong>メンバーを選択してください</strong>
+                        <p class="mb-0">上記のドロップダウンからメンバーを選択すると、そのメンバーのジョブ一覧が表示されます。</p>
+                    </div>
+                </div>
+            }
+            else if (!Model.Any())
+            {
+                <div class="alert-enhanced alert-warning-enhanced">
+                    <i class="fas fa-exclamation-triangle alert-icon"></i>
+                    <div>
+                        <strong>このメンバーのジョブはまだ登録されていません</strong>
+                        <p class="mb-0">「新規ジョブ登録」ボタンからジョブを追加してください。</p>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table jobs-table mb-0">
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-tag me-2"></i>タイトル</th>
+                                <th><i class="fas fa-info-circle me-2"></i>説明</th>
+                                <th><i class="fas fa-calendar me-2"></i>予定期間</th>
+                                <th><i class="fas fa-clock me-2"></i>予定工数(h)</th>
+                                <th><i class="fas fa-tasks me-2"></i>ステータス</th>
+                                <th><i class="fas fa-flag me-2"></i>優先度</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var job in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="job-title">@job.Title</div>
+                                        @if (!string.IsNullOrEmpty(job.Description))
+                                        {
+                                            <div class="job-description">@job.Description</div>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="job-description">@job.Description</div>
+                                    </td>
+                                    <td>
+                                        <div class="job-period">
+                                            @job.ScheduledStart.ToString("yyyy/MM/dd") ～ @job.ScheduledEnd.ToString("yyyy/MM/dd")
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="job-hours">@job.ScheduledHours</div>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge @(job.Status == "未着手" ? "status-not-started" : job.Status == "進行中" ? "status-in-progress" : "status-completed")">
+                                            @job.Status
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="priority-badge @(job.Priority == "高" ? "priority-high" : job.Priority == "中" ? "priority-medium" : "priority-low")">
+                                            @job.Priority
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div> 

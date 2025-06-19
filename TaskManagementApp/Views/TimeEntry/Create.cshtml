@@ -1,0 +1,138 @@
+@model TaskManagementApp.Models.TimeEntry
+
+@{
+    ViewData["Title"] = "作業時間記録追加";
+}
+
+<div class="timeentry-create-bg">
+    <div class="container">
+        <div class="timeentry-create-container">
+            <div class="timeentry-create-header">
+                <div class="timeentry-create-title">
+                    <div class="timeentry-create-title-icon">
+                        <i class="fas fa-plus-circle"></i>
+                    </div>
+                    作業時間記録追加
+                </div>
+                <div class="timeentry-create-subtitle">作業時間を記録して進捗を管理しましょう</div>
+                @if (ViewBag.JobTitle != null)
+                {
+                    <div class="job-info-banner">
+                        <i class="fas fa-tasks"></i>
+                        <span class="job-title">@ViewBag.JobTitle</span>
+                    </div>
+                }
+            </div>
+            
+            <div class="timeentry-create-body">
+                <form asp-action="Create" method="post" autocomplete="on" class="timeentry-create-form">
+                    <div asp-validation-summary="All" class="validation-summary"></div>
+                    
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <i class="fas fa-tasks"></i>
+                            ジョブ選択
+                        </div>
+                        <div class="form-section-body">
+                            <div class="form-group">
+                                <label asp-for="JobId" class="form-label">
+                                    <i class="fas fa-tasks"></i> ジョブ
+                                </label>
+                                <select asp-for="JobId" class="form-control" required>
+                                    <option value="">ジョブを選択してください</option>
+                                    @foreach (var job in ViewBag.Jobs)
+                                    {
+                                        var isSelected = Model.JobId == job.Id;
+                                        <option value="@job.Id" selected="@isSelected">
+                                            @job.Title
+                                        </option>
+                                    }
+                                </select>
+                                <span asp-validation-for="JobId" class="validation-message"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <i class="fas fa-clock"></i>
+                            時間設定
+                        </div>
+                        <div class="form-section-body">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label asp-for="StartTime" class="form-label">
+                                        <i class="fas fa-play"></i> 開始時間
+                                    </label>
+                                    <input asp-for="StartTime" type="datetime-local" class="form-control" required />
+                                    <span asp-validation-for="StartTime" class="validation-message"></span>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label asp-for="EndTime" class="form-label">
+                                        <i class="fas fa-stop"></i> 終了時間
+                                    </label>
+                                    <input asp-for="EndTime" type="datetime-local" class="form-control" required />
+                                    <span asp-validation-for="EndTime" class="validation-message"></span>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label asp-for="BreakTime" class="form-label">
+                                    <i class="fas fa-coffee"></i> 休憩時間（時間）
+                                </label>
+                                <input asp-for="BreakTime" type="number" step="0.5" min="0" max="24" class="form-control" placeholder="0.0" />
+                                <span asp-validation-for="BreakTime" class="validation-message"></span>
+                                <div class="form-help">休憩時間を時間単位で入力してください（例: 1.5 = 1時間30分）</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <i class="fas fa-pencil-alt"></i>
+                            作業内容
+                        </div>
+                        <div class="form-section-body">
+                            <div class="form-group">
+                                <label asp-for="WorkDescription" class="form-label">
+                                    <i class="fas fa-pencil-alt"></i> 作業内容
+                                </label>
+                                <textarea asp-for="WorkDescription" class="form-control" rows="4" placeholder="作業内容を入力してください"></textarea>
+                                <span asp-validation-for="WorkDescription" class="validation-message"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> 戻る
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> 記録
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+    <script>
+        // 開始時間と終了時間の自動設定
+        document.addEventListener('DOMContentLoaded', function() {
+            const startTimeInput = document.querySelector('input[name="StartTime"]');
+            const endTimeInput = document.querySelector('input[name="EndTime"]');
+            // 現在時刻をデフォルト値として設定
+            const now = new Date();
+            const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000); // 1時間後
+            if (startTimeInput && endTimeInput) {
+                startTimeInput.value = now.toISOString().slice(0, 16);
+                endTimeInput.value = oneHourLater.toISOString().slice(0, 16);
+            }
+        });
+    </script>
+} 

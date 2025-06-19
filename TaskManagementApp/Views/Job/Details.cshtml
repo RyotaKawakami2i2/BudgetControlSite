@@ -1,0 +1,268 @@
+@model TaskManagementApp.Models.Job
+
+@{
+    ViewData["Title"] = "ジョブ詳細";
+    var userRole = Context.Session.GetString("UserRole");
+}
+
+<div class="job-details-bg">
+    <div class="container">
+        <div class="job-details-container">
+            <div class="job-details-header">
+                <div class="job-details-title">
+                    <div class="job-details-title-icon">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    ジョブ詳細
+                </div>
+                <div class="job-details-controls">
+                    <a asp-controller="TimeEntry" asp-action="Create" asp-route-jobId="@Model.Id" class="btn btn-primary">
+                        <i class="fas fa-clock"></i> 作業時間記録追加
+                    </a>
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> ジョブ一覧に戻る
+                    </a>
+                </div>
+            </div>
+            
+            <div class="job-details-body">
+                <div class="job-details-grid">
+                    <!-- メイン情報セクション -->
+                    <div class="job-details-main">
+                        <div class="job-info-section">
+                            <div class="section-header">
+                                <i class="fas fa-info-circle"></i>
+                                基本情報
+                            </div>
+                            <div class="section-body">
+                                <div class="job-title-section">
+                                    <h2 class="job-title">@Model.Title</h2>
+                                    <div class="job-badges">
+                                        <span class="job-status job-status-@Model.Status">@Model.Status</span>
+                                        <span class="job-priority job-priority-@Model.Priority">@Model.Priority</span>
+                                        @if (!string.IsNullOrEmpty(Model.Category))
+                                        {
+                                            <span class="job-category">@Model.Category</span>
+                                        }
+                                    </div>
+                                </div>
+                                
+                                <div class="job-progress-section">
+                                    <div class="progress-info">
+                                        <span class="progress-label">進捗状況</span>
+                                        @{
+                                            var progress = Model.Status == "完了" ? 100 : Model.Status == "進行中" ? 50 : 0;
+                                        }
+                                        <span class="progress-percentage">@progress%</span>
+                                    </div>
+                                    <div class="job-progress-bar">
+                                        <div class="job-progress-inner job-progress-inner-@Model.Status" style="width:@progress%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="job-description">
+                                    <div class="description-label">
+                                        <i class="fas fa-align-left"></i> 説明
+                                    </div>
+                                    <div class="description-content">
+                                        @(string.IsNullOrEmpty(Model.Description) ? "説明なし" : Model.Description)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="job-details-section">
+                            <div class="section-header">
+                                <i class="fas fa-calendar-alt"></i>
+                                詳細情報
+                            </div>
+                            <div class="section-body">
+                                <div class="details-grid">
+                                    <div class="detail-item">
+                                        <i class="fas fa-user"></i>
+                                        <span class="detail-label">担当者</span>
+                                        <span class="detail-value">@Model.AssignedUser?.Name</span>
+                                    </div>
+                                    
+                                    @if (Model.ParentJob != null)
+                                    {
+                                        <div class="detail-item">
+                                            <i class="fas fa-sitemap"></i>
+                                            <span class="detail-label">親ジョブ</span>
+                                            <a asp-action="Details" asp-route-id="@Model.ParentJob.Id" class="detail-link">@Model.ParentJob.Title</a>
+                                        </div>
+                                    }
+                                    
+                                    <div class="detail-item">
+                                        <i class="fas fa-calendar-plus"></i>
+                                        <span class="detail-label">予定期間</span>
+                                        <span class="detail-value">@Model.ScheduledStart.ToString("yyyy/MM/dd HH:mm") ～ @Model.ScheduledEnd.ToString("yyyy/MM/dd HH:mm")</span>
+                                    </div>
+                                    
+                                    @if (Model.ActualStart.HasValue)
+                                    {
+                                        <div class="detail-item">
+                                            <i class="fas fa-play"></i>
+                                            <span class="detail-label">実際開始</span>
+                                            <span class="detail-value">@Model.ActualStart.Value.ToString("yyyy/MM/dd HH:mm")</span>
+                                        </div>
+                                    }
+                                    
+                                    @if (Model.ActualEnd.HasValue)
+                                    {
+                                        <div class="detail-item">
+                                            <i class="fas fa-stop"></i>
+                                            <span class="detail-label">実際終了</span>
+                                            <span class="detail-value">@Model.ActualEnd.Value.ToString("yyyy/MM/dd HH:mm")</span>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- サイドバー情報 -->
+                    <div class="job-details-sidebar">
+                        <div class="time-summary-section">
+                            <div class="section-header">
+                                <i class="fas fa-hourglass-half"></i>
+                                時間情報
+                            </div>
+                            <div class="section-body">
+                                <div class="time-summary-grid">
+                                    <div class="time-item">
+                                        <div class="time-label">予定時間</div>
+                                        <div class="time-value time-scheduled">@Model.ScheduledHours.ToString("F1")時間</div>
+                                    </div>
+                                    
+                                    <div class="time-item">
+                                        <div class="time-label">実績時間</div>
+                                        <div class="time-value time-actual">@Model.TotalActualHours.ToString("F1")時間</div>
+                                    </div>
+                                    
+                                    <div class="time-item">
+                                        <div class="time-label">差異</div>
+                                        @{
+                                            var difference = Model.TotalActualHours - Model.ScheduledHours;
+                                            var differenceClass = difference > 0 ? "time-over" : difference < 0 ? "time-under" : "time-exact";
+                                        }
+                                        <div class="time-value @differenceClass">@difference.ToString("F1")時間</div>
+                                    </div>
+                                    
+                                    <div class="time-item">
+                                        <div class="time-label">進捗率</div>
+                                        @{
+                                            var progressRate = Model.ScheduledHours > 0 ? (Model.TotalActualHours / Model.ScheduledHours * 100) : 0;
+                                        }
+                                        <div class="time-value time-progress">@progressRate.ToString("F1")%</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="progress-visual">
+                                    <div class="progress-bar-large">
+                                        <div class="progress-fill @(progressRate > 100 ? "progress-over" : "progress-normal")" 
+                                             style="width: @(Math.Min(progressRate, 100))%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- サブジョブ一覧 -->
+                @if (Model.SubJobs != null && Model.SubJobs.Any())
+                {
+                    <div class="subjobs-section">
+                        <div class="section-header">
+                            <i class="fas fa-layer-group"></i>
+                            サブジョブ一覧
+                        </div>
+                        <div class="section-body">
+                            <div class="subjobs-grid">
+                                @foreach (var sub in Model.SubJobs)
+                                {
+                                    <div class="subjob-card">
+                                        <div class="subjob-title">
+                                            <a asp-action="Details" asp-route-id="@sub.Id" class="subjob-link">@sub.Title</a>
+                                        </div>
+                                        <div class="subjob-status">
+                                            <span class="job-status job-status-@sub.Status">@sub.Status</span>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+                
+                <!-- 作業時間記録 -->
+                <div class="time-entries-section">
+                    <div class="section-header">
+                        <div class="section-header-content">
+                            <i class="fas fa-list"></i>
+                            作業時間記録
+                        </div>
+                        <a asp-controller="TimeEntry" asp-action="Index" asp-route-jobId="@Model.Id" class="btn btn-outline-primary">
+                            <i class="fas fa-list"></i> 詳細一覧
+                        </a>
+                    </div>
+                    <div class="section-body">
+                        @if (!Model.TimeEntries.Any())
+                        {
+                            <div class="empty-state">
+                                <div class="empty-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="empty-title">作業時間記録がありません</div>
+                                <div class="empty-description">作業時間記録を追加して進捗を管理しましょう</div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="time-entries-table">
+                                <div class="table-header">
+                                    <div class="table-row">
+                                        <div class="table-cell">日付</div>
+                                        <div class="table-cell">担当者</div>
+                                        <div class="table-cell">開始時間</div>
+                                        <div class="table-cell">終了時間</div>
+                                        <div class="table-cell">作業時間</div>
+                                        <div class="table-cell">休憩時間</div>
+                                        <div class="table-cell">実作業時間</div>
+                                        <div class="table-cell">作業内容</div>
+                                    </div>
+                                </div>
+                                <div class="table-body">
+                                    @foreach (var entry in Model.TimeEntries.OrderByDescending(te => te.StartTime))
+                                    {
+                                        <div class="table-row">
+                                            <div class="table-cell">@entry.StartTime.ToString("yyyy/MM/dd")</div>
+                                            <div class="table-cell">@entry.User?.Name</div>
+                                            <div class="table-cell">@entry.StartTime.ToString("HH:mm")</div>
+                                            <div class="table-cell">@entry.EndTime.ToString("HH:mm")</div>
+                                            <div class="table-cell">@((entry.EndTime - entry.StartTime).TotalHours.ToString("F1"))時間</div>
+                                            <div class="table-cell">@entry.BreakTime.ToString("F1")時間</div>
+                                            <div class="table-cell time-actual">@entry.ActualWorkHours.ToString("F1")時間</div>
+                                            <div class="table-cell">
+                                                @if (!string.IsNullOrEmpty(entry.WorkDescription))
+                                                {
+                                                    <span class="work-description" title="@entry.WorkDescription">
+                                                        @(entry.WorkDescription.Length > 30 ? entry.WorkDescription.Substring(0, 30) + "..." : entry.WorkDescription)
+                                                    </span>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+} 

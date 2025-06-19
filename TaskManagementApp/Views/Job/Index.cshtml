@@ -1,0 +1,169 @@
+@model IEnumerable<TaskManagementApp.Models.Job>
+@{
+    ViewData["Title"] = "ジョブ一覧";
+}
+
+<div class="job-index-bg">
+    <div class="container">
+        <div class="job-index-container">
+            <div class="job-index-header">
+                <div class="job-index-title">
+                    <div class="job-index-title-icon">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    ジョブ一覧
+                </div>
+                <div class="job-index-controls">
+                    <a href="@Url.Action("Create", "Job")" class="btn btn-create">
+                        <i class="fas fa-plus"></i> 新規ジョブ登録
+                    </a>
+                    <a href="@Url.Action("Gantt", "Job")" class="btn btn-gantt">
+                        <i class="fas fa-chart-bar"></i> ガントチャート表示
+                    </a>
+                    <form method="post" action="@Url.Action("Logout", "Account")" style="display: inline;">
+                        <button type="submit" class="btn btn-logout">
+                            <i class="fas fa-sign-out-alt"></i> ログアウト
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="job-index-body">
+                @if (!Model.Any())
+                {
+                    <div class="job-empty-state">
+                        <div class="job-empty-icon">
+                            <i class="fas fa-inbox"></i>
+                        </div>
+                        <div class="job-empty-title">ジョブが登録されていません</div>
+                        <div class="job-empty-description">新しいジョブを登録して作業を開始しましょう</div>
+                        <a href="@Url.Action("Create", "Job")" class="btn btn-create">
+                            <i class="fas fa-plus"></i> 最初のジョブを作成
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    <div class="job-grid">
+                        @foreach (var job in Model)
+                        {
+                            var progress = job.Status == "完了" ? 100 : job.Status == "進行中" ? 50 : 0;
+                            <div class="job-card">
+                                <div class="job-card-header">
+                                    <div class="job-card-title">
+                                        <a asp-action="Details" asp-route-id="@job.Id" class="job-title-link">
+                                            <i class="fas fa-tasks me-2"></i>@job.Title
+                                        </a>
+                                    </div>
+                                    <div class="job-card-badges">
+                                        <span class="job-status job-status-@job.Status">@job.Status</span>
+                                        <span class="job-priority job-priority-@job.Priority">@job.Priority</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="job-card-body">
+                                    <div class="job-progress-section">
+                                        <div class="job-progress-bar">
+                                            <div class="job-progress-inner job-progress-inner-@job.Status" style="width:@progress%"></div>
+                                        </div>
+                                        <div class="job-progress-text">進捗: @progress%</div>
+                                    </div>
+                                    
+                                    <div class="job-description">
+                                        @((job.Description?.Length > 60 ? job.Description.Substring(0, 60) + "..." : job.Description) ?? "説明なし")
+                                    </div>
+                                    
+                                    <div class="job-details">
+                                        <div class="job-detail-item">
+                                            <i class="fas fa-user"></i>
+                                            <span class="job-detail-label">担当:</span>
+                                            <span class="job-detail-value">@job.AssignedUser?.Name</span>
+                                        </div>
+                                        
+                                        @if (job.ParentJob != null)
+                                        {
+                                            <div class="job-detail-item">
+                                                <i class="fas fa-sitemap"></i>
+                                                <span class="job-detail-label">親ジョブ:</span>
+                                                <a asp-action="Details" asp-route-id="@job.ParentJob.Id" class="job-detail-link">@job.ParentJob.Title</a>
+                                            </div>
+                                        }
+                                        
+                                        <div class="job-detail-item">
+                                            <i class="fas fa-calendar-alt"></i>
+                                            <span class="job-detail-label">期間:</span>
+                                            <span class="job-detail-value">@job.ScheduledStart.ToString("yyyy/MM/dd") ～ @job.ScheduledEnd.ToString("yyyy/MM/dd")</span>
+                                        </div>
+                                        
+                                        <div class="job-detail-item">
+                                            <i class="fas fa-clock"></i>
+                                            <span class="job-detail-label">予定工数:</span>
+                                            <span class="job-detail-value">@job.ScheduledHours 時間</span>
+                                        </div>
+                                        
+                                        <div class="job-detail-item">
+                                            <i class="fas fa-check-circle"></i>
+                                            <span class="job-detail-label">実績工数:</span>
+                                            <span class="job-detail-value">@job.ActualHours 時間</span>
+                                        </div>
+                                        
+                                        @if (!string.IsNullOrEmpty(job.Category))
+                                        {
+                                            <div class="job-detail-item">
+                                                <i class="fas fa-tag"></i>
+                                                <span class="job-detail-label">カテゴリ:</span>
+                                                <span class="job-category">@job.Category</span>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                                
+                                <div class="job-card-footer">
+                                    <div class="job-quick-actions">
+                                        <form asp-action="ChangeStatus" asp-route-id="@job.Id" method="post" class="job-status-form">
+                                            <select class="form-select form-select-sm" name="status" onchange="this.form.submit()">
+                                                @foreach (var s in (List<string>)ViewBag.StatusList)
+                                                {
+                                                    var isSelected = job.Status == s;
+                                                    <option value="@s" selected="@isSelected">@s</option>
+                                                }
+                                            </select>
+                                        </form>
+                                        
+                                        <form asp-action="ChangePriority" asp-route-id="@job.Id" method="post" class="job-priority-form">
+                                            <select class="form-select form-select-sm" name="priority" onchange="this.form.submit()">
+                                                @foreach (var p in (List<string>)ViewBag.PriorityList)
+                                                {
+                                                    var isSelected = job.Priority == p;
+                                                    <option value="@p" selected="@isSelected">@p</option>
+                                                }
+                                            </select>
+                                        </form>
+                                    </div>
+                                    
+                                    <div class="job-actions">
+                                        <a asp-action="Details" asp-route-id="@job.Id" class="btn btn-action btn-details" title="詳細">
+                                            <i class="fas fa-info-circle"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@job.Id" class="btn btn-action btn-edit" title="編集">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form asp-action="Delete" asp-route-id="@job.Id" method="post" style="display:inline;">
+                                            <button type="submit" class="btn btn-action btn-delete" onclick="return confirm('このジョブを削除しますか？');" title="削除">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+} 

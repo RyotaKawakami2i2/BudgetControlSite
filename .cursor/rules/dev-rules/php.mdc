@@ -1,0 +1,48 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# PHP/Laravel 開発ルール
+
+## コーディング規約
+- PSR-12に準拠したコーディングスタイル
+- クラス名はPascalCase（例：TaskController）
+- メソッド名はcamelCase（例：getTaskList）
+- 変数名はcamelCase（例：$taskId）
+- 定数名はUPPER_SNAKE_CASE（例：TASK_STATUS_ACTIVE）
+
+## Laravel 固有ルール
+- コントローラーは単一責任の原則に従う
+- Eloquentモデルではリレーションを適切に定義
+- フォームリクエストクラスでバリデーションを実装
+- サービスクラスでビジネスロジックを分離
+- リポジトリパターンでデータアクセス層を抽象化
+
+## セキュリティ
+- 認証はLaravel Sanctumを使用
+- パスワードはbcryptでハッシュ化
+- CSRFトークンを全フォームに実装
+- SQLインジェクション対策（Eloquent ORM使用）
+- XSS対策（Bladeテンプレートの自動エスケープ活用）
+
+## ファイル命名規則
+- コントローラー: {Model}Controller.php
+- モデル: {Model}.php
+- マイグレーション: {timestamp}_create_{table}_table.php
+- シーダー: {Model}Seeder.php
+- ファクトリー: {Model}Factory.php
+- ポリシー: {Model}Policy.php
+
+## データベース設計
+- テーブル名は複数形、スネークケース
+- 外部キーは{singular_table_name}_id
+- タイムスタンプはcreated_at, updated_at
+- ソフトデリートはdeleted_at
+- インデックスは適切に設定
+
+## テスト
+- 各機能に対してユニットテストを作成
+- フィーチャーテストでAPIエンドポイントをテスト
+- ファクトリーを使用してテストデータを作成
+- モックを使用して外部依存を分離

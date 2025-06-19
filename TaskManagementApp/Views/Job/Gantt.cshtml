@@ -1,0 +1,121 @@
+@model IEnumerable<TaskManagementApp.Models.Job>
+@{
+    ViewData["Title"] = "ガントチャート";
+    // ステータス別の色マッピング
+    var statusColors = new Dictionary<string, string>
+    {
+        { "未着手", "#808080" },  // 灰色
+        { "進行中", "#FFD700" },  // 黄色
+        { "完了", "#4169E1" }     // 青色
+    };
+}
+
+<div class="gantt-bg">
+    <div class="container">
+        <div class="gantt-container">
+            <div class="gantt-header">
+                <div class="gantt-title">
+                    <div class="gantt-title-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    ガントチャート（ステータス別）
+                </div>
+                <div class="gantt-controls">
+                    <button class="btn btn-today" onclick="moveToToday()">
+                        <i class="fas fa-calendar-check"></i> 今日
+                    </button>
+                    <a href="@Url.Action("Index", "Job")" class="btn btn-back">
+                        <i class="fas fa-arrow-left"></i> ジョブ一覧に戻る
+                    </a>
+                </div>
+            </div>
+            
+            <!-- フィルターと日付範囲設定 -->
+            <div class="gantt-filters">
+                <div class="filter-section">
+                    <div class="filter-title">
+                        <i class="fas fa-filter"></i>
+                        ステータスフィルター
+                    </div>
+                    <div class="filter-controls">
+                        <button class="btn btn-filter active" data-status="all" onclick="setStatusFilter('all')">
+                            <i class="fas fa-list"></i> すべて
+                        </button>
+                        <button class="btn btn-filter" data-status="未着手" onclick="setStatusFilter('未着手')">
+                            <i class="fas fa-clock"></i> 未着手
+                        </button>
+                        <button class="btn btn-filter" data-status="進行中" onclick="setStatusFilter('進行中')">
+                            <i class="fas fa-play"></i> 進行中
+                        </button>
+                        <button class="btn btn-filter" data-status="完了" onclick="setStatusFilter('完了')">
+                            <i class="fas fa-check-circle"></i> 完了
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="filter-section">
+                    <div class="filter-title">
+                        <i class="fas fa-calendar-alt"></i>
+                        表示期間
+                    </div>
+                    <div class="date-range-controls">
+                        <div class="date-input-group">
+                            <label for="startDate">開始日:</label>
+                            <input type="date" id="startDate" class="form-control" onchange="updateDateRange()">
+                        </div>
+                        <div class="date-input-group">
+                            <label for="endDate">終了日:</label>
+                            <input type="date" id="endDate" class="form-control" onchange="updateDateRange()">
+                        </div>
+                        <button class="btn btn-reset" onclick="resetDateRange()">
+                            <i class="fas fa-undo"></i> リセット
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="gantt-body">
+                <div class="gantt-chart-container">
+                    <div id="gantt" style="height: 600px; overflow-x:auto;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script src="~/js/gantt.js"></script>
+    <script>
+        // サーバーサイドのデータをJavaScriptに渡す
+        var jobs = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Select(j => new {
+            id = j.Id,
+            title = j.Title,
+            status = j.Status,
+            start = j.ScheduledStart,
+            end = j.ScheduledEnd,
+            priority = j.Priority,
+            assignee = j.AssignedUser?.Name ?? "未割当",
+            category = j.Category ?? "未分類"
+        })));
+        
+        // グローバル変数に設定
+        window.jobsData = jobs;
+        
+        // データ設定後に初期化を実行
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof initializeGanttData === 'function') {
+                initializeGanttData(jobs);
+            } else {
+                // 関数がまだ読み込まれていない場合は少し待ってから再試行
+                setTimeout(() => {
+                    if (typeof initializeGanttData === 'function') {
+                        initializeGanttData(jobs);
+                    } else {
+                        console.error('initializeGanttData関数が見つかりません');
+                    }
+                }, 100);
+            }
+        });
+    </script>
+} 

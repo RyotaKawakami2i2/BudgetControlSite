@@ -1,0 +1,150 @@
+@{
+    ViewData["Title"] = "ユーザー登録";
+}
+
+<div class="register-bg">
+    <div class="col-12 col-md-6 col-lg-5">
+        <div class="card register-card p-4">
+            <div class="text-center">
+                <div class="register-icon">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+                <h2 class="mb-4 fw-bold">ユーザー登録</h2>
+                <p class="text-muted mb-4">新しいユーザーアカウントを作成します</p>
+            </div>
+
+            @if (ViewBag.Error != null)
+            {
+                <div class="alert-enhanced alert-danger-enhanced">
+                    <i class="fas fa-exclamation-triangle alert-icon"></i>
+                    <div>
+                        <strong>登録エラー</strong>
+                        <p class="mb-0">@ViewBag.Error</p>
+                    </div>
+                </div>
+            }
+
+            @if (ViewBag.Success != null)
+            {
+                <div class="alert-enhanced alert-success-enhanced">
+                    <i class="fas fa-check-circle alert-icon"></i>
+                    <div>
+                        <strong>登録成功</strong>
+                        <p class="mb-0">@ViewBag.Success</p>
+                    </div>
+                </div>
+            }
+
+            <form method="post" autocomplete="on" id="registerForm">
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <div class="form-section-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        基本情報
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="name" class="form-label fw-semibold">名前</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-user"></i></span>
+                            <input type="text" class="form-control" id="name" name="name" required placeholder="山田 太郎" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label fw-semibold">メールアドレス</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                            <input type="email" class="form-control" id="email" name="email" required placeholder="your@email.com" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <div class="form-section-icon">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        セキュリティ設定
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label fw-semibold">パスワード</label>
+                        <div class="input-group" id="show_hide_password">
+                            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                            <input type="password" class="form-control" id="password" name="password" required placeholder="パスワード" />
+                            <span class="input-group-text" style="cursor:pointer;" onclick="togglePassword()">
+                                <i class="fas fa-eye" id="togglePasswordIcon"></i>
+                            </span>
+                        </div>
+                        <div class="password-strength" id="passwordStrength"></div>
+                        <div class="password-requirements" id="passwordRequirements">
+                            <div class="requirement-item">
+                                <div class="requirement-icon requirement-not-met" id="reqLength">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <span>12文字以上</span>
+                            </div>
+                            <div class="requirement-item">
+                                <div class="requirement-icon requirement-not-met" id="reqUppercase">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <span>大文字を含む</span>
+                            </div>
+                            <div class="requirement-item">
+                                <div class="requirement-icon requirement-not-met" id="reqLowercase">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <span>小文字を含む</span>
+                            </div>
+                            <div class="requirement-item">
+                                <div class="requirement-icon requirement-not-met" id="reqNumber">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <span>数字を含む</span>
+                            </div>
+                            <div class="requirement-item">
+                                <div class="requirement-icon requirement-not-met" id="reqSpecial">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <span>記号を含む</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <div class="form-section-icon">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        アカウント情報
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>一般ユーザーアカウント</strong><br>
+                            新規登録されるアカウントは一般ユーザー権限で作成されます。<br>
+                            管理者やリーダー権限が必要な場合は、管理者にお問い合わせください。
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-register">
+                        <i class="fas fa-user-plus me-2"></i>アカウントを作成
+                    </button>
+                    <a href="@Url.Action("Login", "Account")" class="btn-login-link text-center">
+                        <i class="fas fa-sign-in-alt me-2"></i>ログイン画面へ戻る
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/register.js"></script>
+} 

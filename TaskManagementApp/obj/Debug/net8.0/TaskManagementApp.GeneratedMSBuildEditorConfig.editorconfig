@@ -1,0 +1,127 @@
+is_global = true
+build_property.TargetFramework = net8.0
+build_property.TargetFramework = net8.0
+build_property.TargetPlatformMinVersion = 
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.ProjectTypeGuids = 
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = 
+build_property.InvariantGlobalization = 
+build_property.PlatformNeutralAssembly = 
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property.RootNamespace = TaskManagementApp
+build_property.RootNamespace = TaskManagementApp
+build_property.ProjectDir = /mnt/c/users/r2320/source/repos/BudgetControlSite/TaskManagementApp/
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.RazorLangVersion = 8.0
+build_property.SupportLocalizedComponentNames = 
+build_property.GenerateRazorMetadataSourceChecksumAttributes = 
+build_property.MSBuildProjectDirectory = /mnt/c/users/r2320/source/repos/BudgetControlSite/TaskManagementApp
+build_property._RazorSourceGeneratorDebug = 
+
+[/mnt/c/users/r2320/source/repos/BudgetControlSite/TaskManagementApp/Views/Account/ForgotPassword.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQWNjb3VudC9Gb3Jnb3RQYXNzd29yZC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/mnt/c/users/r2320/source/repos/BudgetControlSite/TaskManagementApp/Views/Account/Login.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQWNjb3VudC9Mb2dpbi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/mnt/c/users/r2320/source/repos/BudgetControlSite/TaskManagementApp/Views/Account/Register.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQWNjb3VudC9SZWdpc3Rlci5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/mnt/c/users/r2320/source/repos/BudgetControlSite/TaskManagementApp/Views/Account/ResetPassword.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQWNjb3VudC9SZXNldFBhc3N3b3JkLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/mnt/c/users/r2320/source/repos/BudgetControlSite/TaskManagementApp/Views/Home/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvSG9tZS9JbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/mnt/c/users/r2320/source/repos/BudgetControlSite/TaskManagementApp/Views/Home/Privacy.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvSG9tZS9Qcml2YWN5LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/mnt/c/users/r2320/source/repos/BudgetControlSite/TaskManagementApp/Views/Job/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvSm9iL0NyZWF0ZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/mnt/c/users/r2320/source/repos/BudgetControlSite/TaskManagementApp/Views/Job/Details.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvSm9iL0RldGFpbHMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/mnt/c/users/r2320/source/repos/BudgetControlSite/TaskManagementApp/Views/Job/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvSm9iL0VkaXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/mnt/c/users/r2320/source/repos/BudgetControlSite/TaskManagementApp/Views/Job/Gantt.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvSm9iL0dhbnR0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/mnt/c/users/r2320/source/repos/BudgetControlSite/TaskManagementApp/Views/Job/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvSm9iL0luZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/mnt/c/users/r2320/source/repos/BudgetControlSite/TaskManagementApp/Views/Shared/Error.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL0Vycm9yLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/mnt/c/users/r2320/source/repos/BudgetControlSite/TaskManagementApp/Views/Shared/_ValidationScriptsPartial.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL19WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/mnt/c/users/r2320/source/repos/BudgetControlSite/TaskManagementApp/Views/Team/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVGVhbS9DcmVhdGUuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/mnt/c/users/r2320/source/repos/BudgetControlSite/TaskManagementApp/Views/Team/CreateMemberJob.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVGVhbS9DcmVhdGVNZW1iZXJKb2IuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/mnt/c/users/r2320/source/repos/BudgetControlSite/TaskManagementApp/Views/Team/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVGVhbS9FZGl0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/mnt/c/users/r2320/source/repos/BudgetControlSite/TaskManagementApp/Views/Team/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVGVhbS9JbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/mnt/c/users/r2320/source/repos/BudgetControlSite/TaskManagementApp/Views/Team/MemberJobs.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVGVhbS9NZW1iZXJKb2JzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/mnt/c/users/r2320/source/repos/BudgetControlSite/TaskManagementApp/Views/Team/Members.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVGVhbS9NZW1iZXJzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/mnt/c/users/r2320/source/repos/BudgetControlSite/TaskManagementApp/Views/TimeEntry/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVGltZUVudHJ5L0NyZWF0ZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/mnt/c/users/r2320/source/repos/BudgetControlSite/TaskManagementApp/Views/TimeEntry/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVGltZUVudHJ5L0VkaXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/mnt/c/users/r2320/source/repos/BudgetControlSite/TaskManagementApp/Views/TimeEntry/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVGltZUVudHJ5L0luZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/mnt/c/users/r2320/source/repos/BudgetControlSite/TaskManagementApp/Views/_ViewImports.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvX1ZpZXdJbXBvcnRzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/mnt/c/users/r2320/source/repos/BudgetControlSite/TaskManagementApp/Views/_ViewStart.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvX1ZpZXdTdGFydC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/mnt/c/users/r2320/source/repos/BudgetControlSite/TaskManagementApp/Views/Shared/_Layout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL19MYXlvdXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = b-2bvdhicz93

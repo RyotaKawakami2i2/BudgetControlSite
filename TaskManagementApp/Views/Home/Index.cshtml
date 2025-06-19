@@ -1,0 +1,223 @@
+﻿@{
+    ViewData["Title"] = "タスク・作業時間管理システム";
+}
+
+<!-- ヒーローセクション -->
+<div class="hero-section text-center py-5 mb-5" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 0 0 2rem 2rem;">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h1 class="display-3 fw-bold mb-4 animate__animated animate__fadeInDown">
+                    <i class="fas fa-tasks me-3"></i>タスク・作業時間管理システム
+                </h1>
+                <p class="lead mb-5 animate__animated animate__fadeInUp animate__delay-1s">
+                    チームや個人のタスク予定・実績、作業時間を一元管理。<br>
+                    進捗やガントチャート、グラフで可視化できます。
+                </p>
+                <div class="animate__animated animate__fadeInUp animate__delay-2s">
+                    <a href="@Url.Action("Login", "Account")" class="btn btn-light btn-lg px-5 py-3 me-3 shadow-lg">
+                        <i class="fas fa-sign-in-alt me-2"></i>ログインしてはじめる
+                    </a>
+                    <a href="@Url.Action("Register", "Account")" class="btn btn-outline-light btn-lg px-5 py-3 shadow-lg">
+                        <i class="fas fa-user-plus me-2"></i>新規登録
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 統計情報セクション -->
+<div class="container mb-5">
+    <div class="row g-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-lg h-100 text-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <div class="card-body py-4">
+                    <div class="display-6 mb-3">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <h3 class="fw-bold mb-2">タスク管理</h3>
+                    <p class="mb-0 opacity-75">効率的なタスク管理で生産性向上</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-lg h-100 text-center" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                <div class="card-body py-4">
+                    <div class="display-6 mb-3">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h3 class="fw-bold mb-2">時間管理</h3>
+                    <p class="mb-0 opacity-75">予実管理で正確な工数把握</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-lg h-100 text-center" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                <div class="card-body py-4">
+                    <div class="display-6 mb-3">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3 class="fw-bold mb-2">チーム管理</h3>
+                    <p class="mb-0 opacity-75">チーム全体の進捗を一元管理</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-lg h-100 text-center" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
+                <div class="card-body py-4">
+                    <div class="display-6 mb-3">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="fw-bold mb-2">可視化</h3>
+                    <p class="mb-0 opacity-75">ガントチャートで進捗を可視化</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 機能詳細セクション -->
+<div class="container mb-5">
+    <h2 class="text-center mb-5 fw-bold">
+        <i class="fas fa-star text-warning me-2"></i>主要機能
+    </h2>
+    <div class="row g-4">
+        <div class="col-lg-4 col-md-6">
+            <div class="card border-0 shadow-lg h-100 hover-lift">
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <div class="feature-icon bg-primary bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                            <i class="fas fa-tasks fa-2x"></i>
+                        </div>
+                    </div>
+                    <h4 class="card-title text-center mb-3 fw-bold">タスク管理</h4>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>タスクの登録・編集・進捗管理</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>優先度・ステータス管理</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>カテゴリ別分類</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>親子タスク関係</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6">
+            <div class="card border-0 shadow-lg h-100 hover-lift">
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <div class="feature-icon bg-success bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                    </div>
+                    <h4 class="card-title text-center mb-3 fw-bold">作業時間管理</h4>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>予定・実績の作業時間記録</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>差異分析と可視化</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>工数集計レポート</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>時間効率分析</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6">
+            <div class="card border-0 shadow-lg h-100 hover-lift">
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <div class="feature-icon bg-info bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
+                    <h4 class="card-title text-center mb-3 fw-bold">チーム管理</h4>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>チーム作成・メンバー管理</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>リーダー権限管理</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>チーム進捗一覧</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>メンバー予定入力</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CTA セクション -->
+<div class="container mb-5">
+    <div class="card border-0 shadow-lg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+        <div class="card-body text-center py-5">
+            <h2 class="fw-bold mb-4">
+                <i class="fas fa-rocket me-2"></i>今すぐ始めましょう
+            </h2>
+            <p class="lead mb-4">効率的なタスク管理で、チームの生産性を向上させませんか？</p>
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <a href="@Url.Action("Login", "Account")" class="btn btn-light btn-lg px-4 py-2 shadow">
+                    <i class="fas fa-sign-in-alt me-2"></i>ログイン
+                </a>
+                <a href="@Url.Action("Register", "Account")" class="btn btn-outline-light btn-lg px-4 py-2 shadow">
+                    <i class="fas fa-user-plus me-2"></i>新規登録
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.hover-lift {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 1rem 3rem rgba(0,0,0,.175) !important;
+}
+
+.feature-icon {
+    transition: transform 0.3s ease;
+}
+
+.card:hover .feature-icon {
+    transform: scale(1.1);
+}
+
+.animate__animated {
+    animation-duration: 1s;
+    animation-fill-mode: both;
+}
+
+@@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translate3d(0, -100%, 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+@@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 100%, 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+.animate__fadeInDown {
+    animation-name: fadeInDown;
+}
+
+.animate__fadeInUp {
+    animation-name: fadeInUp;
+}
+
+.animate__delay-1s {
+    animation-delay: 1s;
+}
+
+.animate__delay-2s {
+    animation-delay: 2s;
+}
+</style>

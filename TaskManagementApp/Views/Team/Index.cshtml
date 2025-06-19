@@ -1,0 +1,430 @@
+@model IEnumerable<TaskManagementApp.Models.Team>
+
+@{
+    ViewData["Title"] = "チーム管理";
+    var userRole = Context.Session.GetString("UserRole");
+}
+
+<style>
+    .team-management-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 0;
+        margin: -1.5rem -1.5rem 2rem -1.5rem;
+        border-radius: 0 0 2rem 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    .team-card {
+        background: white;
+        border-radius: 1.5rem;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        border: none;
+        transition: all 0.3s ease;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .team-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+    }
+
+    .team-card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 1.5rem;
+        position: relative;
+    }
+
+    .team-card-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 50%, rgba(255,255,255,0.1) 100%);
+        pointer-events: none;
+    }
+
+    .team-card-body {
+        padding: 1.5rem;
+    }
+
+    .team-info-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding: 0.75rem;
+        background: #f8f9fa;
+        border-radius: 0.75rem;
+        border-left: 4px solid #667eea;
+    }
+
+    .team-info-icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+
+    .team-info-content {
+        flex: 1;
+    }
+
+    .team-info-label {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+    }
+
+    .team-info-value {
+        font-weight: 600;
+        color: #495057;
+    }
+
+    .member-badge {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        border-radius: 2rem;
+        padding: 0.5rem 1rem;
+        margin: 0.25rem;
+        display: inline-block;
+        font-size: 0.875rem;
+        font-weight: 500;
+        box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+    }
+
+    .member-count-badge {
+        background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+        color: white;
+        border-radius: 2rem;
+        padding: 0.25rem 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+    }
+
+    .team-card-footer {
+        background: #f8f9fa;
+        border: none;
+        padding: 1.5rem;
+        border-radius: 0 0 1.5rem 1.5rem;
+    }
+
+    .action-btn {
+        border-radius: 2rem;
+        padding: 0.5rem 1.25rem;
+        font-weight: 600;
+        border: none;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0.25rem;
+    }
+
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    .btn-primary-gradient {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+    }
+
+    .btn-success-gradient {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+    }
+
+    .btn-secondary-gradient {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+    }
+
+    .btn-danger-gradient {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+    }
+
+    .btn-outline-primary-gradient {
+        background: transparent;
+        color: #007bff;
+        border: 2px solid #007bff;
+    }
+
+    .btn-outline-primary-gradient:hover {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        border-color: transparent;
+    }
+
+    .btn-outline-success-gradient {
+        background: transparent;
+        color: #28a745;
+        border: 2px solid #28a745;
+    }
+
+    .btn-outline-success-gradient:hover {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        border-color: transparent;
+    }
+
+    .btn-outline-secondary-gradient {
+        background: transparent;
+        color: #6c757d;
+        border: 2px solid #6c757d;
+    }
+
+    .btn-outline-secondary-gradient:hover {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+        border-color: transparent;
+    }
+
+    .btn-outline-danger-gradient {
+        background: transparent;
+        color: #dc3545;
+        border: 2px solid #dc3545;
+    }
+
+    .btn-outline-danger-gradient:hover {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        border-color: transparent;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        background: white;
+        border-radius: 1.5rem;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+
+    .create-team-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 2rem;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .create-team-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        color: white;
+    }
+
+    .team-stats {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        flex: 1;
+        margin: 0 0.5rem;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #667eea;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-weight: 500;
+    }
+</style>
+
+<div class="team-management-hero">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="display-4 fw-bold mb-3">
+                    <i class="fas fa-users me-3"></i>チーム管理
+                </h1>
+                <p class="lead mb-0">チームの作成・編集・メンバー管理を行います</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                @if (userRole == "Admin")
+                {
+                    <a asp-action="Create" class="create-team-btn">
+                        <i class="fas fa-plus"></i> 新規チーム作成
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    @if (!Model.Any())
+    {
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <h3 class="text-muted mb-3">チームが登録されていません</h3>
+            <p class="text-muted mb-4">新しいチームを作成して、プロジェクト管理を始めましょう</p>
+            @if (userRole == "Admin")
+            {
+                <a asp-action="Create" class="create-team-btn">
+                    <i class="fas fa-plus"></i> 最初のチームを作成
+                </a>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="team-stats">
+            <div class="stat-card">
+                <div class="stat-number">@Model.Count()</div>
+                <div class="stat-label">総チーム数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">@Model.Sum(t => t.TeamUsers?.Count ?? 0)</div>
+                <div class="stat-label">総メンバー数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">@Model.Count(t => !string.IsNullOrEmpty(t.TeamLeader))</div>
+                <div class="stat-label">リーダー設定済み</div>
+            </div>
+        </div>
+
+        <div class="row">
+            @foreach (var team in Model)
+            {
+                <div class="col-lg-6 col-xl-4 mb-4">
+                    <div class="team-card">
+                        <div class="team-card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-users me-2"></i>@team.Name
+                            </h5>
+                        </div>
+                        <div class="team-card-body">
+                            <div class="team-info-item">
+                                <div class="team-info-icon">
+                                    <i class="fas fa-crown"></i>
+                                </div>
+                                <div class="team-info-content">
+                                    <div class="team-info-label">チームリーダー</div>
+                                    <div class="team-info-value">@team.TeamLeader</div>
+                                </div>
+                            </div>
+
+                            <div class="team-info-item">
+                                <div class="team-info-icon">
+                                    <i class="fas fa-user-friends"></i>
+                                </div>
+                                <div class="team-info-content">
+                                    <div class="team-info-label">メンバー数</div>
+                                    <div class="team-info-value">
+                                        @(team.TeamUsers?.Count ?? 0) 人
+                                        <span class="member-count-badge ms-2">
+                                            <i class="fas fa-users me-1"></i>@(team.TeamUsers?.Count ?? 0)
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            @if (team.TeamUsers != null && team.TeamUsers.Any())
+                            {
+                                <div class="team-info-item">
+                                    <div class="team-info-icon">
+                                        <i class="fas fa-list"></i>
+                                    </div>
+                                    <div class="team-info-content">
+                                        <div class="team-info-label">メンバー一覧</div>
+                                        <div class="mt-2">
+                                            @foreach (var teamUser in team.TeamUsers.Take(3))
+                                            {
+                                                <span class="member-badge">
+                                                    <i class="fas fa-user me-1"></i>@(teamUser.User?.Name ?? "")
+                                                </span>
+                                            }
+                                            @if (team.TeamUsers.Count > 3)
+                                            {
+                                                <span class="member-badge">
+                                                    <i class="fas fa-plus me-1"></i>+@(team.TeamUsers.Count - 3)
+                                                </span>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div class="team-card-footer">
+                            <div class="d-flex flex-wrap justify-content-center">
+                                <a asp-action="Members" asp-route-id="@team.Id" class="action-btn btn-outline-primary-gradient">
+                                    <i class="fas fa-users"></i> メンバー管理
+                                </a>
+                                @if (userRole == "Admin" || team.TeamLeader == Context.Session.GetString("UserName"))
+                                {
+                                    <a asp-action="MemberJobs" asp-route-teamId="@team.Id" class="action-btn btn-outline-success-gradient">
+                                        <i class="fas fa-tasks"></i> 進捗・予定入力
+                                    </a>
+                                }
+                                @if (userRole == "Admin")
+                                {
+                                    <a asp-action="Edit" asp-route-id="@team.Id" class="action-btn btn-outline-secondary-gradient">
+                                        <i class="fas fa-edit"></i> 編集
+                                    </a>
+                                    <form asp-action="Delete" asp-route-id="@team.Id" method="post" style="display: inline;">
+                                        <button type="submit" class="action-btn btn-outline-danger-gradient" 
+                                                onclick="return confirm('このチームを削除しますか？')">
+                                            <i class="fas fa-trash"></i> 削除
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // 削除確認のためのJavaScript
+        function confirmDelete(teamName) {
+            return confirm(`チーム「${teamName}」を削除しますか？`);
+        }
+    </script>
+} 

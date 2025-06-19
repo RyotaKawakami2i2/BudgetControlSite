@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:16
+    container_name: task_management_db
+    environment:
+      POSTGRES_DB: task_management
+      POSTGRES_USER: task_user
+      POSTGRES_PASSWORD: task_pass_2024
+    ports:
+      - "5433:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    restart: always
+  mailhog:
+    image: mailhog/mailhog
+    container_name: mailhog
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
+    restart: always
+volumes:
+  db_data: 

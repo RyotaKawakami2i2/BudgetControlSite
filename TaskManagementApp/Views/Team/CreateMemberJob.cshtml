@@ -1,0 +1,56 @@
+@model TaskManagementApp.Models.Job
+@{
+    ViewData["Title"] = "メンバーのジョブ新規登録";
+    var teamId = (int)ViewBag.TeamId;
+    var userId = (int)ViewBag.UserId;
+    var userName = (string)ViewBag.UserName;
+    var statusList = (string[])ViewBag.StatusList;
+    var priorityList = (string[])ViewBag.PriorityList;
+}
+<div class="container mt-4">
+    <h2>@userName さんのジョブ新規登録</h2>
+    <form asp-action="CreateMemberJob" method="post">
+        <input type="hidden" name="teamId" value="@teamId" />
+        <input type="hidden" name="userId" value="@userId" />
+        <div class="mb-3">
+            <label for="Title" class="form-label">タイトル</label>
+            <input type="text" class="form-control" id="Title" name="Title" required />
+        </div>
+        <div class="mb-3">
+            <label for="Description" class="form-label">説明</label>
+            <textarea class="form-control" id="Description" name="Description"></textarea>
+        </div>
+        <div class="mb-3">
+            <label for="ScheduledStart" class="form-label">予定開始日</label>
+            <input type="date" class="form-control" id="ScheduledStart" name="ScheduledStart" required />
+        </div>
+        <div class="mb-3">
+            <label for="ScheduledEnd" class="form-label">予定終了日</label>
+            <input type="date" class="form-control" id="ScheduledEnd" name="ScheduledEnd" required />
+        </div>
+        <div class="mb-3">
+            <label for="ScheduledHours" class="form-label">予定工数（h）</label>
+            <input type="number" step="0.1" class="form-control" id="ScheduledHours" name="ScheduledHours" required />
+        </div>
+        <div class="mb-3">
+            <label for="Status" class="form-label">ステータス</label>
+            <select class="form-control" id="Status" name="Status">
+                @foreach (var s in statusList)
+                {
+                    <option value="@s">@s</option>
+                }
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="Priority" class="form-label">優先度</label>
+            <select class="form-control" id="Priority" name="Priority">
+                @foreach (var p in priorityList)
+                {
+                    <option value="@p">@p</option>
+                }
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">登録</button>
+        <a asp-action="MemberJobs" asp-route-teamId="@teamId" asp-route-userId="@userId" class="btn btn-link">戻る</a>
+    </form>
+</div> 
