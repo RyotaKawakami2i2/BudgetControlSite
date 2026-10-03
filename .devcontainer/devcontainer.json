@@ -1,0 +1,42 @@
+{
+	// 開発コンテナの設定。構成は基本設計書 8.5、詳細設計書 2.1 に合わせている
+	"name": "タスク予実管理（開発）",
+	"dockerComposeFile": "compose.yaml",
+	"service": "workspace",
+	"runServices": ["workspace", "db", "mailpit"],
+	"workspaceFolder": "/workspaces/BudgetControlSite",
+	"shutdownAction": "stopCompose",
+	"remoteUser": "vscode",
+	"features": {
+		// 画面側（React と TypeScript）のビルドに使う。pnpm 11 以降は Node.js 22 以上が必要
+		// pnpm は、公開から 7 日以上たった版に固定する（基本設計書 8.6）
+		"ghcr.io/devcontainers/features/node:2": {
+			"version": "24",
+			"pnpmVersion": "12.7.0",
+			"nodeGypDependencies": false
+		},
+		"ghcr.io/devcontainers/features/github-cli:1": {},
+		"ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
+	},
+	// 転送するのは、アプリ、画面の開発サーバー、Mailpit の画面だけ。DB はホストに出さない
+	"forwardPorts": [5080, 5173, "mailpit:8025"],
+	"portsAttributes": {
+		"5080": { "label": "アプリ（ASP.NET Core）" },
+		"5173": { "label": "画面の開発サーバー（Vite）" },
+		"mailpit:8025": { "label": "Mailpit（送ったメールの確認）" }
+	},
+	// 上の 3 つ以外のポートは、自動では転送しない
+	"otherPortsAttributes": { "onAutoForward": "ignore" },
+	"postCreateCommand": "bash .devcontainer/post-create.sh",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-dotnettools.csharp",
+				"dbaeumer.vscode-eslint",
+				"editorconfig.editorconfig",
+				"davidanson.vscode-markdownlint",
+				"bierner.markdown-mermaid"
+			]
+		}
+	}
+}

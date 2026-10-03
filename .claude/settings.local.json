@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:docs.github.com)",
+      "WebFetch(domain:vite.dev)",
+      "Bash(python3 -)",
+      "Bash(git check-ignore *)",
+      "Bash(node -e \"console.log\\(JSON.stringify\\('Hiyori.zip'.replace\\(/\\\\\\\\\\\\\\\\.zip\\\\$/i, ''\\)\\)\\)\")"
+    ]
+  }
+}
