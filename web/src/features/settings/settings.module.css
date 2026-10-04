@@ -1,0 +1,27 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+  max-width: 1100px;
+}
+
+.form {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.form > div {
+  flex: 1;
+  min-width: 200px;
+}
+
+.form input {
+  width: 100%;
+}
+
+.form button {
+  margin-bottom: 22px;
+}

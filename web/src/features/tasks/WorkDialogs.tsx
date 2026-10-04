@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useUpdateTask, useWorkLogMutations } from '../../api/hooks';
 import type { WorkLog } from '../../api/types';
 import { EffortInput, effortText } from '../../components/EffortInput';
+import { Icon } from '../../components/Icon';
 import { Button, Dialog, Field, describeError, fieldErrors, ui, useToast } from '../../components/ui';
 import { todayIso } from '../../lib/dates';
 import { parseEffort } from '../../lib/effort';
@@ -72,6 +73,7 @@ export function WorkLogDialog({ task, log, onClose }: { task: WorkTarget; log?: 
     <Dialog
       open
       title={log ? '作業実績の修正' : '作業実績の記録'}
+      description={log ? '記録した日と時間を直します。' : '作業した日と時間を記録します。最初の記録で、状態は「進行中」になります。'}
       onClose={onClose}
       footer={
         <>
@@ -83,7 +85,10 @@ export function WorkLogDialog({ task, log, onClose }: { task: WorkTarget; log?: 
       }
     >
       <form id="worklog-form" className={styles.form} onSubmit={(e) => void submit(e)} noValidate>
-        <p className="muted">{task.title}</p>
+        <p className={styles.taskBadge}>
+          <Icon name="check" size={16} />
+          {task.title}
+        </p>
         <div className={ui.grid2}>
           <Field label="作業日" required htmlFor="wl-date" errors={errors.workDate}>
             <input id="wl-date" type="date" value={workDate} max={todayIso()} onChange={(e) => setWorkDate(e.target.value)} />
@@ -147,6 +152,7 @@ export function CompleteDialog({ task, actualStart, onClose }: { task: WorkTarge
     <Dialog
       open
       title="完了にする"
+      description="実績終了日を入れて完了にします。進捗率は 100% になります。"
       onClose={onClose}
       footer={
         <>
@@ -158,7 +164,10 @@ export function CompleteDialog({ task, actualStart, onClose }: { task: WorkTarge
       }
     >
       <form id="complete-form" className={styles.form} onSubmit={(e) => void submit(e)} noValidate>
-        <p className="muted">{task.title}</p>
+        <p className={styles.taskBadge}>
+          <Icon name="check" size={16} />
+          {task.title}
+        </p>
         <Field label="実績終了日" required htmlFor="cp-end" errors={errors.actualEnd}>
           <input id="cp-end" type="date" value={actualEnd} max={todayIso()} min={actualStart ?? undefined} onChange={(e) => setActualEnd(e.target.value)} />
         </Field>

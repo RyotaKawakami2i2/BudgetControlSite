@@ -6,7 +6,7 @@
 
 .auth-shell {
   min-height: 100%;
-  background: var(--color-surface);
+  background: var(--color-page);
 }
 
 .auth-header {
@@ -19,13 +19,21 @@
 }
 
 .auth-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
   font-weight: 700;
+  font-size: 15px;
   color: var(--color-text);
   text-decoration: none;
 }
 
+.auth-logo {
+  color: var(--color-primary);
+}
+
 .auth-main {
-  padding: var(--space-6) var(--space-4);
+  padding: var(--space-7) var(--space-4);
 }
 
 .auth-card {
@@ -33,8 +41,33 @@
   margin: 0 auto;
   background: var(--color-bg);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-6);
+}
+
+.auth-card h1 {
+  font-size: 22px;
+  margin-bottom: var(--space-1);
+}
+
+.auth-lead {
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-4);
+}
+
+/* 認証の画面は幅が狭いため、ボタンを横いっぱいに並べる */
+.auth-card .actions {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.auth-card .field input {
+  min-height: 40px;
+}
+
+.auth-card .actions .btn {
+  min-height: 40px;
 }
 
 .form {
@@ -98,6 +131,7 @@
   background: var(--color-primary);
   border-color: var(--color-primary);
   color: #ffffff;
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-primary:hover {
@@ -148,6 +182,7 @@
   padding: var(--space-2) var(--space-3);
   margin: var(--space-2) 0;
   border: 1px solid;
+  border-left-width: 4px;
 }
 
 .alert p:last-child {
@@ -157,13 +192,13 @@
 .alert-error {
   background: var(--color-danger-soft);
   border-color: var(--color-danger);
-  color: var(--color-danger-hover);
+  color: var(--color-danger-strong);
 }
 
 .alert-success {
   background: var(--color-success-soft);
   border-color: var(--color-success);
-  color: var(--color-success);
+  color: var(--color-success-strong);
 }
 
 .alert-info {
@@ -247,13 +282,26 @@
   margin: 0 auto;
 }
 
+.manage-nav {
+  align-self: start;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-3);
+}
+
 .manage-nav ul {
   list-style: none;
   padding: 0;
-  margin: 0 0 var(--space-4);
+  margin: 0 0 var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .manage-nav li a {
+  position: relative;
   display: block;
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius);
@@ -261,31 +309,64 @@
   text-decoration: none;
 }
 
+.manage-nav li a:hover {
+  background: var(--color-surface);
+}
+
 .manage-nav li a.active {
   background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
   font-weight: 600;
+}
+
+.manage-nav li a.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--color-primary);
 }
 
 .manage-title {
   font-size: var(--font-size-large);
+  margin: var(--space-1) var(--space-2) var(--space-3);
+}
+
+.manage-back {
+  display: inline-block;
+  margin: 0 var(--space-2);
+  font-size: var(--font-size-small);
+  font-weight: 600;
 }
 
 .manage-body {
   background: var(--color-bg);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-5) var(--space-6);
   min-width: 0;
 }
 
 .settings-list {
   display: grid;
   grid-template-columns: max-content 1fr;
-  gap: var(--space-2) var(--space-5);
+  gap: 0 var(--space-5);
+  margin: 0;
+}
+
+.settings-list dt,
+.settings-list dd {
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .settings-list dt {
   font-weight: 600;
+  color: var(--color-text-muted);
 }
 
 .settings-list dd {

@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useMe, useTeamMutations, useTeams } from '../../api/hooks';
-import { Button, Dialog, ErrorBox, Field, Loading, describeError, fieldErrors, useToast } from '../../components/ui';
+import { Icon } from '../../components/Icon';
+import { Button, Dialog, EmptyState, ErrorBox, Field, Loading, PageHeader, Pill, describeError, fieldErrors, ui, useToast } from '../../components/ui';
 import { ROLE } from '../../lib/labels';
 import { messageText } from '../../lib/messages';
+import styles from './teams.module.css';
 
 /** チーム（SC-12。FR-TEM-04、05）。所属チームの一覧。リーダーは新しいチーム（プロジェクト）を作れる。 */
 export function TeamsPage() {
@@ -15,48 +17,62 @@ export function TeamsPage() {
 
   return (
     <div className="page">
-      <div className="page-header">
-        <h1>チーム</h1>
-        <label className="row">
-          <input type="checkbox" checked={includeArchived} onChange={(e) => setIncludeArchived(e.target.checked)} />
-          アーカイブしたチームも表示する
-        </label>
-        {leaderAnywhere && (
-          <Button variant="primary" onClick={() => setCreating(true)}>
-            新しいチーム（プロジェクト）を作る
-          </Button>
-        )}
-        {!leaderAnywhere && me?.isAdmin && <Link to="/admin/teams">チーム管理でチームを作る</Link>}
-      </div>
+      <PageHeader
+        icon="team"
+        title="チーム"
+        description="所属しているチーム（プロジェクト）です。チームを開くと、メンバー・役割・タグを確かめられます。"
+        actions={
+          <>
+            <label className="check-label">
+              <input type="checkbox" checked={includeArchived} onChange={(e) => setIncludeArchived(e.target.checked)} />
+              アーカイブしたチームも表示する
+            </label>
+            {leaderAnywhere && (
+              <Button variant="primary" onClick={() => setCreating(true)}>
+                <Icon name="plus" size={16} />
+                新しいチーム（プロジェクト）を作る
+              </Button>
+            )}
+            {!leaderAnywhere && me?.isAdmin && (
+              <Link to="/admin/teams" className={ui.button}>
+                チーム管理でチームを作る
+              </Link>
+            )}
+          </>
+        }
+      />
       {isLoading && <Loading />}
       {error && <ErrorBox error={error} />}
-      {data && data.length === 0 && <p className="empty">所属しているチームはありません。</p>}
+      {data && data.length === 0 && (
+        <EmptyState icon="team" title="所属しているチームはありません" description="チームのリーダーか管理者に、チームへの追加を依頼してください。" />
+      )}
       {data && data.length > 0 && (
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th scope="col">チーム（プロジェクト）</th>
-              <th scope="col">自分の役割</th>
-              <th scope="col" className="num">
-                メンバー
-              </th>
-              <th scope="col">説明</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((t) => (
-              <tr key={t.id}>
-                <td>
-                  <Link to={`/teams/${t.id}`}>{t.name}</Link>
-                  {t.archived && <span className="muted">（アーカイブ）</span>}
-                </td>
-                <td>{ROLE[t.role]}</td>
-                <td className="num">{t.memberCount}人</td>
-                <td className="prewrap">{t.description}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className={styles.cards}>
+          {data.map((t) => (
+            <article key={t.id} className={[styles.teamCard, t.archived && styles.archived].filter(Boolean).join(' ')}>
+              <header className={styles.teamCardHeader}>
+                <Link to={`/teams/${t.id}`} className={styles.teamCardName}>
+                  {t.name}
+                </Link>
+                <Pill tone={t.role === 'leader' ? 'primary' : 'neutral'}>{ROLE[t.role]}</Pill>
+                {t.archived && (
+                  <Pill icon="archive" tone="neutral">
+                    アーカイブ
+                  </Pill>
+                )}
+              </header>
+              <p className={styles.teamCardDescription}>{t.description || <span className="muted">（説明はありません）</span>}</p>
+              <footer className={styles.teamCardFooter}>
+                <span className="muted">
+                  <Icon name="user" size={14} /> メンバー {t.memberCount} 人
+                </span>
+                <span className="spacer" />
+                <Link to={`/gantt?teams=${t.id}`}>ガント</Link>
+                <Link to={`/teams/${t.id}`}>開く</Link>
+              </footer>
+            </article>
+          ))}
+        </div>
       )}
       {creating && <CreateTeamDialog onClose={() => setCreating(false)} />}
     </div>
@@ -92,6 +108,7 @@ export function CreateTeamDialog({ onClose }: { onClose: () => void }) {
     <Dialog
       open
       title="新しいチーム（プロジェクト）"
+      description="作った人が、このチームのリーダーになります。メンバーは作ったあとに追加します。"
       onClose={onClose}
       footer={
         <>
@@ -109,7 +126,6 @@ export function CreateTeamDialog({ onClose }: { onClose: () => void }) {
         <Field label="説明" htmlFor="team-desc" errors={errors.description} hint="500 字以内">
           <textarea id="team-desc" value={description} maxLength={500} onChange={(e) => setDescription(e.target.value)} />
         </Field>
-        <p className="muted">作った人が、このチームのリーダーになります。</p>
       </div>
     </Dialog>
   );

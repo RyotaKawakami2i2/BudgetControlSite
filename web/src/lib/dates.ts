@@ -79,6 +79,27 @@ export function formatDateTime(utc: string | null | undefined): string {
 }
 
 /** その週の月曜日（週は月曜始まり）。 */
+/**
+ * 予定終了日までの残りを短い言葉で表す（一覧で期限を一目で分かるようにする）。
+ * 予定終了日がなければ null。完了したタスクには使わない。
+ */
+export function dueLabel(plannedEnd: string | null, today: string): { text: string; tone: 'danger' | 'warning' | 'neutral' } | null {
+  if (!plannedEnd) return null;
+  const days = toDay(plannedEnd) - toDay(today);
+  if (days < 0) return { text: `${-days} 日超過`, tone: 'danger' };
+  if (days === 0) return { text: '今日まで', tone: 'warning' };
+  if (days === 1) return { text: '明日まで', tone: 'warning' };
+  return { text: `あと ${days} 日`, tone: 'neutral' };
+}
+
+/** 時間帯に合わせたあいさつ（ホームの見出しに使う）。 */
+export function greeting(now: Date = new Date()): string {
+  const hour = Number(new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Tokyo', hour: 'numeric', hourCycle: 'h23' }).format(now));
+  if (hour >= 4 && hour < 11) return 'おはようございます';
+  if (hour >= 11 && hour < 18) return 'こんにちは';
+  return 'お疲れさまです';
+}
+
 export function mondayOf(iso: string): string {
   const day = toDay(iso);
   return toIso(day - ((dayOfWeek(day) + 6) % 7));

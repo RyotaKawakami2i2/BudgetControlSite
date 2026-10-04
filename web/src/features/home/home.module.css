@@ -1,3 +1,112 @@
+.action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border-input);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.action:hover {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+/* ---------------------------------------------------------------- 件数 */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.stat {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-sm);
+  color: var(--color-text);
+  text-decoration: none;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+
+.stat:hover {
+  border-color: var(--color-primary);
+  color: var(--color-text);
+  box-shadow: var(--shadow);
+}
+
+.statIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.statBody {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.statLabel {
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.statNumber {
+  font-size: var(--font-size-number);
+  font-weight: 700;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.statNumber small {
+  font-size: var(--font-size);
+  font-weight: 600;
+  margin-left: 2px;
+}
+
+.statCaption {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
+.statAlert {
+  border-color: var(--color-danger);
+  background: var(--color-danger-soft);
+}
+
+.statAlert .statIcon {
+  background: var(--color-danger);
+  color: #ffffff;
+}
+
+.statAlert .statLabel,
+.statAlert .statNumber {
+  color: var(--color-danger-strong);
+}
+
+.statAlert:hover {
+  border-color: var(--color-danger);
+}
+
+/* ---------------------------------------------------------------- 2 列 */
 .grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -5,70 +114,145 @@
   align-items: start;
 }
 
-.counts {
-  display: flex;
-  gap: var(--space-3);
-  margin-bottom: var(--space-3);
-}
-
-.count {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+.more {
+  display: inline-flex;
   align-items: center;
-  padding: var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  color: var(--color-text);
+  gap: 4px;
+  font-size: var(--font-size-small);
+  font-weight: 600;
   text-decoration: none;
 }
 
-.count:hover {
-  background: var(--color-surface);
+.groupTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
 }
 
-.countAlert {
-  border-color: var(--color-danger);
+.groupDanger {
   color: var(--color-danger);
 }
 
-.countNumber {
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1.2;
+.groupWarning {
+  color: var(--color-warning-strong);
 }
 
+.groupCount {
+  font-weight: 400;
+  margin-left: var(--space-1);
+}
+
+/* ---------------------------------------------------------------- チームの状況 */
 .team {
-  border-top: 1px solid var(--color-border);
-  padding: var(--space-3) 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
 }
 
 .teamHeader {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
   gap: var(--space-2);
   flex-wrap: wrap;
-  font-weight: 600;
+  margin-bottom: var(--space-3);
 }
 
-.stats {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-2);
-  margin: var(--space-2) 0;
+.teamName {
+  font-weight: 700;
+  font-size: var(--font-size-large);
+  text-decoration: none;
+  color: var(--color-text);
 }
 
-.stats dt {
+.teamName:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.teamPeriod {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   color: var(--color-text-muted);
   font-size: var(--font-size-small);
 }
 
-.stats dd {
-  margin: 0;
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-5);
 }
 
-@media (max-width: 1000px) {
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.metricLabel {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
+.metricValue {
+  font-size: var(--font-size-large);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.metricValue small {
+  font-size: var(--font-size-small);
+  font-weight: 400;
+  color: var(--color-text-muted);
+  margin-left: 2px;
+}
+
+.delayLink {
+  color: var(--color-danger);
+}
+
+.delayLink:hover {
+  color: var(--color-danger-strong);
+}
+
+.teamLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--font-size-small);
+  font-weight: 600;
+}
+
+@media (max-width: 1100px) {
   .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  /* 幅の狭い画面では、件数を 3 つ横に並べて小さく見せる */
+  .stats {
+    gap: var(--space-2);
+  }
+
+  .stat {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .statIcon,
+  .statCaption {
+    display: none;
+  }
+
+  .metrics {
     grid-template-columns: 1fr;
   }
 }

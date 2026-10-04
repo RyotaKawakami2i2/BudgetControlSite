@@ -4,7 +4,8 @@ import { useSearchParams } from 'react-router';
 import { api } from '../../api/client';
 import { invalidateTaskData, keys, useGantt, useGanttSearch, useMe, useViews } from '../../api/hooks';
 import type { Gantt, GanttTask } from '../../api/types';
-import { ErrorBox, Loading, describeError, useToast } from '../../components/ui';
+import { Icon } from '../../components/Icon';
+import { Button, EmptyState, ErrorBox, Loading, describeError, useToast } from '../../components/ui';
 import { readCurrentTeamId, useSyncCurrentTeam, useTaskPanel } from '../../layout/context';
 import { presetRange, toDay, todayIso } from '../../lib/dates';
 import { formatHours, formatSignedHours } from '../../lib/effort';
@@ -12,7 +13,7 @@ import { COLOR_LABEL, PRIORITY, PRIORITY_ORDER, ROLE, STATUS, STATUS_ORDER, tagC
 import { TaskFormDialog, type TaskFormTarget } from '../tasks/TaskFormDialog';
 import { GanttChart } from './GanttChart';
 import { GanttToolbar } from './GanttToolbar';
-import { fromSearchParams, fromViewConditions, toSearchParams, type GanttConditions } from './model/conditions';
+import { clearFilters, fromSearchParams, fromViewConditions, hasFilters, toSearchParams, type GanttConditions } from './model/conditions';
 import { buildRows } from './model/rows';
 import { ViewMenu } from './ViewMenu';
 import styles from './gantt.module.css';
@@ -39,7 +40,8 @@ export function GanttPage() {
   const update = useCallback(
     (next: GanttConditions, replace = true) => {
       const task = params.get('task');
-      setParams(toSearchParams(next, { task }), { replace });
+      // 条件の変更はすぐに反映する（続けて操作したときに、前の変更が古い条件で上書きされないように）
+      setParams(toSearchParams(next, { task }), { replace, flushSync: true });
     },
     [params, setParams],
   );
@@ -169,16 +171,56 @@ export function GanttPage() {
         onCreate={!readOnly && writableTeam ? () => setForm({ mode: 'create', teamId: writableTeam.id }) : undefined}
         viewMenu={<ViewMenu conditions={conditions} onApply={(c) => update(c, false)} />}
       />
-      {adminView && <p className={styles.notice}>{ROLE.admin_view}: 所属していないチームは、閲覧だけができます（閲覧したことは監査ログに残ります）。</p>}
-      {data?.teams.some((t) => t.archived) && <p className={styles.notice}>アーカイブしたチームは読み取り専用です。</p>}
-      {narrow && <p className={styles.notice}>スマートフォンでは、ガントは閲覧だけができます。</p>}
-      {data?.truncated && <p className={[styles.notice, styles.noticeWarning].join(' ')}>タスクが多いため、一部だけを表示しています。条件を絞ってください。</p>}
+      {adminView && (
+        <p className={[styles.notice, styles.noticeInfo].join(' ')}>
+          <Icon name="eye" size={16} />
+          {ROLE.admin_view}: 所属していないチームは、閲覧だけができます（閲覧したことは監査ログに残ります）。
+        </p>
+      )}
+      {data?.teams.some((t) => t.archived) && (
+        <p className={styles.notice}>
+          <Icon name="archive" size={16} />
+          アーカイブしたチームは読み取り専用です。
+        </p>
+      )}
+      {narrow && (
+        <p className={styles.notice}>
+          <Icon name="info" size={16} />
+          スマートフォンでは、ガントは閲覧だけができます。
+        </p>
+      )}
+      {data?.truncated && (
+        <p className={[styles.notice, styles.noticeWarning].join(' ')}>
+          <Icon name="warning" size={16} />
+          タスクが多いため、一部だけを表示しています。条件を絞ってください。
+        </p>
+      )}
       {gantt.error && <ErrorBox error={gantt.error} />}
       {gantt.isLoading && <Loading />}
       {data && result && (
         <>
           {result.rows.length === 0 ? (
-            <p className={styles.empty}>条件に合うタスクはありません。</p>
+            <div className={styles.empty}>
+              {hasFilters(conditions) ? (
+                <EmptyState
+                  icon="filter"
+                  title="条件に合うタスクはありません"
+                  description="絞り込みの条件をゆるめるか、解除してください。"
+                  action={
+                    <Button onClick={() => update(clearFilters(conditions))}>
+                      <Icon name="close" size={14} />
+                      条件を解除
+                    </Button>
+                  }
+                />
+              ) : (
+                <EmptyState
+                  icon="gantt"
+                  title="表示期間にタスクはありません"
+                  description={readOnly || !writableTeam ? '表示期間を変えると、ほかの期間のタスクを確かめられます。' : '表示期間を変えるか、「タスクを追加」から最初のタスクを登録してください。'}
+                />
+              )}
+            </div>
           ) : (
             <GanttChart
               rows={result.rows}
@@ -194,12 +236,32 @@ export function GanttPage() {
               onReschedule={(task, start, end) => void reschedule(task, start, end)}
             />
           )}
-          <div className={styles.footer} aria-live="polite">
-            <span>表示 {result.totals.count}件</span>
-            <span>予定工数 {formatHours(result.totals.plannedMinutes)}</span>
-            <span>実績工数 {formatHours(result.totals.actualMinutes)}</span>
-            <span>差 {formatSignedHours(result.totals.actualMinutes - result.totals.plannedMinutes)}</span>
+          <div className={styles.footer}>
+            <div className={styles.totals} aria-live="polite">
+              <span className={styles.total}>
+                <span>表示</span>
+                <strong>{result.totals.count}件</strong>
+              </span>
+              <span className={styles.total}>
+                <span>予定工数</span>
+                <strong>{formatHours(result.totals.plannedMinutes)}</strong>
+              </span>
+              <span className={styles.total}>
+                <span>実績工数</span>
+                <strong>{formatHours(result.totals.actualMinutes)}</strong>
+              </span>
+              <span className={styles.total}>
+                <span>差</span>
+                <strong>{formatSignedHours(result.totals.actualMinutes - result.totals.plannedMinutes)}</strong>
+              </span>
+            </div>
             <Legend conditions={conditions} data={data} />
+            {!readOnly && result.rows.length > 0 && (
+              <p className={styles.hint}>
+                <Icon name="info" size={14} />
+                バーをドラッグすると日程を、バーの端をドラッグすると期間を変えられます。変えた直後は Ctrl + Z で取り消せます。タスク名を押すと詳細を開きます。
+              </p>
+            )}
           </div>
         </>
       )}

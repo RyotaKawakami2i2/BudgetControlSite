@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useAdminUserMutations, useAdminUsers, useMe } from '../../api/hooks';
 import type { AdminUser } from '../../api/types';
-import { Button, ConfirmDialog, Dialog, ErrorBox, Field, Loading, describeError, fieldErrors, useToast } from '../../components/ui';
+import { Icon } from '../../components/Icon';
+import { Avatar, Button, ConfirmDialog, Dialog, EmptyState, ErrorBox, Field, Loading, PageHeader, Pill, describeError, fieldErrors, useToast } from '../../components/ui';
+import styles from './admin.module.css';
 import { formatDateTime } from '../../lib/dates';
 import { USER_STATUS } from '../../lib/labels';
 
@@ -64,14 +66,22 @@ export function AdminUsersPage() {
 
   return (
     <div className="page">
-      <div className="page-header">
-        <h1>利用者管理</h1>
-        <Button variant="primary" onClick={() => setInviting(true)}>
-          招待する
-        </Button>
-      </div>
-      <div className="row">
-        <input type="search" aria-label="名前かメールアドレスで検索" placeholder="名前かメールアドレス" value={q} onChange={(e) => setQ(e.target.value)} />
+      <PageHeader
+        icon="user"
+        title="利用者管理"
+        description="利用者の招待、無効化、管理者権限、多要素認証のリセットを行います。操作の前に、もう一度本人確認を求めることがあります。"
+        actions={
+          <Button variant="primary" onClick={() => setInviting(true)}>
+            <Icon name="plus" size={16} />
+            招待する
+          </Button>
+        }
+      />
+      <div className={styles.filters}>
+        <span className={styles.search}>
+          <Icon name="search" size={16} />
+          <input type="search" aria-label="名前かメールアドレスで検索" placeholder="名前かメールアドレスで検索" value={q} onChange={(e) => setQ(e.target.value)} />
+        </span>
         <select aria-label="状態" value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">すべての状態</option>
           <option value="invited">招待中</option>
@@ -81,77 +91,101 @@ export function AdminUsersPage() {
       </div>
       {isLoading && <Loading />}
       {error && <ErrorBox error={error} />}
-      {data && (
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th scope="col">名前</th>
-              <th scope="col">メールアドレス</th>
-              <th scope="col">状態</th>
-              <th scope="col">管理者</th>
-              <th scope="col">多要素認証</th>
-              <th scope="col" className="num">
-                チーム
-              </th>
-              <th scope="col">最終ログイン</th>
-              <th scope="col">
-                <span className="visually-hidden">操作</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((u) => (
-              <tr key={u.id}>
-                <td>
-                  {u.displayName}
-                  {u.id === me?.id && <span className="muted">（自分）</span>}
-                </td>
-                <td>{u.email}</td>
-                <td>
-                  {USER_STATUS[u.status]}
-                  {u.locked && <span> ！ ロック中</span>}
-                  {u.status === 'invited' && u.invitationExpiresAt && <div className="muted">期限 {formatDateTime(u.invitationExpiresAt)}</div>}
-                </td>
-                <td>{u.isAdmin ? '✓ 管理者' : ''}</td>
-                <td>{u.mfaEnabled || u.passkeyCount > 0 ? `✓ ${[u.mfaEnabled && '認証アプリ', u.passkeyCount > 0 && `パスキー ${u.passkeyCount}`].filter(Boolean).join('、')}` : '！ 未設定'}</td>
-                <td className="num">{u.teamCount}</td>
-                <td>{formatDateTime(u.lastLoginAt)}</td>
-                <td className="row">
-                  {u.status === 'invited' && (
-                    <>
-                      <Button size="small" onClick={() => void run(m.resend.mutateAsync(u.id), '招待を再送しました。')}>
-                        招待を再送
-                      </Button>
-                      <Button size="small" variant="ghost" onClick={() => setAction({ kind: 'revoke', user: u })}>
-                        招待を取り消す
-                      </Button>
-                    </>
-                  )}
-                  {u.status === 'active' && (
-                    <Button size="small" variant="ghost" onClick={() => setAction({ kind: 'disable', user: u })}>
-                      無効にする
-                    </Button>
-                  )}
-                  {u.status === 'disabled' && (
-                    <Button size="small" onClick={() => setAction({ kind: 'enable', user: u })}>
-                      有効にする
-                    </Button>
-                  )}
-                  {u.status !== 'disabled' && (
-                    <Button size="small" variant="ghost" onClick={() => setAction({ kind: u.isAdmin ? 'ungrant' : 'grant', user: u })}>
-                      {u.isAdmin ? '管理者を外す' : '管理者にする'}
-                    </Button>
-                  )}
-                  {u.mfaEnabled && (
-                    <Button size="small" variant="ghost" onClick={() => setAction({ kind: 'reset-mfa', user: u })}>
-                      多要素認証をリセット
-                    </Button>
-                  )}
-                </td>
+      {data && data.length === 0 && <EmptyState icon="user" title="条件に合う利用者はいません" />}
+      {data && data.length > 0 && (
+        <div className="table-wrap">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th scope="col">名前</th>
+                <th scope="col">メールアドレス</th>
+                <th scope="col">状態</th>
+                <th scope="col">管理者</th>
+                <th scope="col">多要素認証</th>
+                <th scope="col" className="num">
+                  チーム
+                </th>
+                <th scope="col">最終ログイン</th>
+                <th scope="col">
+                  <span className="visually-hidden">操作</span>
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {data.map((u) => (
+                <tr key={u.id}>
+                  <td>
+                    <span className={styles.person}>
+                      <Avatar name={u.displayName} />
+                      <span>
+                        {u.displayName}
+                        {u.id === me?.id && <span className="muted">（自分）</span>}
+                      </span>
+                    </span>
+                  </td>
+                  <td>{u.email}</td>
+                  <td>
+                    <span className="row">
+                      <Pill tone={u.status === 'active' ? 'success' : u.status === 'invited' ? 'primary' : 'neutral'}>{USER_STATUS[u.status]}</Pill>
+                      {u.locked && (
+                        <Pill tone="danger" icon="lock">
+                          ロック中
+                        </Pill>
+                      )}
+                    </span>
+                    {u.status === 'invited' && u.invitationExpiresAt && <div className="muted small">期限 {formatDateTime(u.invitationExpiresAt)}</div>}
+                  </td>
+                  <td>{u.isAdmin && <Pill tone="primary" icon="shield">管理者</Pill>}</td>
+                  <td>
+                    {u.mfaEnabled || u.passkeyCount > 0 ? (
+                      <Pill tone="success" icon="check">
+                        {[u.mfaEnabled && '認証アプリ', u.passkeyCount > 0 && `パスキー ${u.passkeyCount}`].filter(Boolean).join('、')}
+                      </Pill>
+                    ) : (
+                      <Pill tone="warning">！ 未設定</Pill>
+                    )}
+                  </td>
+                  <td className="num">{u.teamCount}</td>
+                  <td className="nowrap muted">{formatDateTime(u.lastLoginAt) || '-'}</td>
+                  <td className="actions">
+                    <span className={styles.actions}>
+                      {u.status === 'invited' && (
+                        <>
+                          <Button size="small" onClick={() => void run(m.resend.mutateAsync(u.id), '招待を再送しました。')}>
+                            招待を再送
+                          </Button>
+                          <Button size="small" variant="dangerGhost" onClick={() => setAction({ kind: 'revoke', user: u })}>
+                            招待を取り消す
+                          </Button>
+                        </>
+                      )}
+                      {u.status === 'active' && (
+                        <Button size="small" variant="dangerGhost" onClick={() => setAction({ kind: 'disable', user: u })}>
+                          無効にする
+                        </Button>
+                      )}
+                      {u.status === 'disabled' && (
+                        <Button size="small" onClick={() => setAction({ kind: 'enable', user: u })}>
+                          有効にする
+                        </Button>
+                      )}
+                      {u.status !== 'disabled' && (
+                        <Button size="small" variant="ghost" onClick={() => setAction({ kind: u.isAdmin ? 'ungrant' : 'grant', user: u })}>
+                          {u.isAdmin ? '管理者を外す' : '管理者にする'}
+                        </Button>
+                      )}
+                      {u.mfaEnabled && (
+                        <Button size="small" variant="ghost" onClick={() => setAction({ kind: 'reset-mfa', user: u })}>
+                          多要素認証をリセット
+                        </Button>
+                      )}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {inviting && <InviteDialog onClose={() => setInviting(false)} />}
@@ -194,6 +228,7 @@ function InviteDialog({ onClose }: { onClose: () => void }) {
     <Dialog
       open
       title="利用者の招待"
+      description="招待のメールを送ります。本人はメールのリンクからパスワードを設定して使い始めます（リンクは 72 時間有効）。"
       onClose={onClose}
       footer={
         <>
@@ -224,11 +259,10 @@ function InviteDialog({ onClose }: { onClose: () => void }) {
         <Field label="表示名" required htmlFor="invite-name" errors={errors.displayName}>
           <input id="invite-name" type="text" value={displayName} maxLength={50} onChange={(e) => setDisplayName(e.target.value)} />
         </Field>
-        <label className="row">
+        <label className="check-label">
           <input type="checkbox" checked={isAdmin} onChange={(e) => setIsAdmin(e.target.checked)} />
-          管理者として招待する
+          管理者として招待する（利用者とチームの管理、監査ログの閲覧ができます）
         </label>
-        <p className="muted">本人は、招待のメールのリンクからパスワードを設定して利用を始めます。</p>
       </div>
     </Dialog>
   );

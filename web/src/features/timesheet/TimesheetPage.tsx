@@ -1,12 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../api/client';
 import { useSaveTimesheet, useTimesheet } from '../../api/hooks';
 import type { Timesheet } from '../../api/types';
 import { EffortInput } from '../../components/EffortInput';
 import { Icon } from '../../components/Icon';
-import { Button, ErrorBox, Loading, describeError, useToast } from '../../components/ui';
+import { Button, EmptyState, ErrorBox, Loading, PageHeader, Pill, describeError, useToast } from '../../components/ui';
 import { useTaskPanel } from '../../layout/context';
-import { addDays, formatShortDate, mondayOf, todayIso } from '../../lib/dates';
+import { addDays, formatDate, formatShortDate, isWeekend, mondayOf, toDay, todayIso } from '../../lib/dates';
 import { formatHm, parseEffort } from '../../lib/effort';
 import { STATUS } from '../../lib/labels';
 import { fieldMessage, messageText } from '../../lib/messages';
@@ -19,20 +19,30 @@ export function TimesheetPage() {
 
   return (
     <div className="page">
-      <div className="page-header">
-        <h1>週の入力表</h1>
-        <div className="row">
-          <Button size="small" onClick={() => setWeekStart(addDays(weekStart, -7))}>
-            ◀ 前の週
-          </Button>
-          <Button size="small" onClick={() => setWeekStart(mondayOf(todayIso()))}>
-            今週
-          </Button>
-          <Button size="small" onClick={() => setWeekStart(addDays(weekStart, 7))}>
-            次の週 ▶
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        icon="clock"
+        title="週の入力表"
+        description="担当しているタスクの作業時間を、1 週間分まとめて入力します。「1.5」または「1:30」の形で、15 分単位で入れてください。"
+        actions={
+          <div className={styles.weekNav}>
+            <span className={styles.weekLabel}>
+              {formatDate(weekStart)} 〜 {formatShortDate(addDays(weekStart, 6))}
+              {weekStart === mondayOf(todayIso()) && <Pill tone="primary">今週</Pill>}
+            </span>
+            <span className={styles.segmented} role="group" aria-label="表示する週">
+              <Button size="small" onClick={() => setWeekStart(addDays(weekStart, -7))}>
+                ◀ 前の週
+              </Button>
+              <Button size="small" onClick={() => setWeekStart(mondayOf(todayIso()))}>
+                今週
+              </Button>
+              <Button size="small" onClick={() => setWeekStart(addDays(weekStart, 7))}>
+                次の週 ▶
+              </Button>
+            </span>
+          </div>
+        }
+      />
       {isLoading && <Loading />}
       {error && <ErrorBox error={error} />}
       {data && <Grid key={data.weekStart + JSON.stringify(data.rows.map((r) => r.cells))} data={data} />}
@@ -76,6 +86,25 @@ function Grid({ data }: { data: Timesheet }) {
 
   const dayTotals = data.days.map((d) => rows.reduce((sum, r) => sum + (minutesOf(`${r.taskId}|${d}`) ?? 0), 0));
   const overDays = data.days.filter((_, i) => (dayTotals[i] ?? 0) > 1440);
+
+  // 保存していない変更（入力を変えたマス）
+  const isChanged = (key: string, original: number) => {
+    const text = values[key] ?? '';
+    const minutes = minutesOf(key);
+    return minutes === null || (text.trim() !== '' || original !== 0 ? minutes !== original : false);
+  };
+  const changedCount = rows.reduce(
+    (count, row) => count + row.cells.filter((c) => !c.locked && row.editable && isChanged(`${row.taskId}|${c.date}`, c.minutes)).length,
+    0,
+  );
+
+  // 保存していない変更があるまま画面を離れようとしたら、ブラウザの確認を出す
+  useEffect(() => {
+    if (changedCount === 0) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [changedCount]);
 
   const submit = async () => {
     const cells: Array<{ taskId: string; date: string; minutes: number }> = [];
@@ -122,15 +151,15 @@ function Grid({ data }: { data: Timesheet }) {
 
   return (
     <>
-      <p className="muted">作業時間を「1.5」または「1:30」で入力して、まとめて保存します。タスク詳細から記録した日（鍵のマーク）は、ここでは変えられません。</p>
       <div className={styles.scroll}>
         <table className={['data-table', styles.table].join(' ')}>
           <thead>
             <tr>
               <th scope="col">タスク</th>
               {data.days.map((d) => (
-                <th key={d} scope="col" className={[styles.day, d === today && styles.today].filter(Boolean).join(' ')}>
+                <th key={d} scope="col" className={[styles.day, isWeekend(toDay(d)) && styles.weekend, d === today && styles.today].filter(Boolean).join(' ')}>
                   {formatShortDate(d)}
+                  {d === today && <span className={styles.todayMark}>今日</span>}
                 </th>
               ))}
               <th scope="col" className="num">
@@ -141,8 +170,8 @@ function Grid({ data }: { data: Timesheet }) {
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={data.days.length + 2} className="empty">
-                  担当しているタスクがありません。
+                <td colSpan={data.days.length + 2}>
+                  <EmptyState compact icon="inbox" title="この週に入力できる担当タスクはありません。" />
                 </td>
               </tr>
             )}
@@ -154,14 +183,20 @@ function Grid({ data }: { data: Timesheet }) {
                     <Button variant="link" onClick={() => open(row.taskId)}>
                       {row.title}
                     </Button>
-                    <div className="muted">
+                    <div className={styles.rowMeta}>
                       {row.teamName}　{STATUS[row.status].icon} {STATUS[row.status].label}
                     </div>
                   </th>
                   {row.cells.map((cell) => {
                     const key = `${row.taskId}|${cell.date}`;
+                    const editable = !cell.locked && row.editable;
                     return (
-                      <td key={key} className={styles.cell}>
+                      <td
+                        key={key}
+                        className={[styles.cell, isWeekend(toDay(cell.date)) && styles.weekend, cell.date === today && styles.todayCell, editable && isChanged(key, cell.minutes) && styles.changed]
+                          .filter(Boolean)
+                          .join(' ')}
+                      >
                         {cell.locked || !row.editable ? (
                           <span className={styles.locked} title={cell.locked ? messageText('MSG-WL-006') : '記録できないタスクです'}>
                             {cell.locked && <Icon name="lock" size={12} label="変更できません" />}
@@ -185,30 +220,38 @@ function Grid({ data }: { data: Timesheet }) {
                       </td>
                     );
                   })}
-                  <td className="num">{formatHm(rowTotal) || '0:00'}</td>
+                  <td className={['num', styles.total].join(' ')}>{formatHm(rowTotal) || '0:00'}</td>
                 </tr>
               );
             })}
           </tbody>
           <tfoot>
-            <tr>
+            <tr className={styles.totalRow}>
               <th scope="row">1 日の合計</th>
               {dayTotals.map((total, i) => (
                 <td key={data.days[i]} className={['num', total > 1440 && styles.over].filter(Boolean).join(' ')}>
                   {formatHm(total) || '0:00'}
                 </td>
               ))}
-              <td className="num">{formatHm(dayTotals.reduce((a, b) => a + b, 0)) || '0:00'}</td>
+              <td className={['num', styles.total].join(' ')}>{formatHm(dayTotals.reduce((a, b) => a + b, 0)) || '0:00'}</td>
             </tr>
           </tfoot>
         </table>
       </div>
+      <p className={styles.legend}>
+        <span>
+          <Icon name="lock" size={12} /> タスク詳細から記録した日は、ここでは変えられません（タスク詳細の「作業実績」で直します）
+        </span>
+        <span>
+          <span className={styles.changedSwatch} aria-hidden="true" /> まだ保存していないマス
+        </span>
+      </p>
       {overDays.length > 0 && (
         <p className={styles.error} role="alert">
           ！ {overDays.map((d) => messageText('MSG-WL-002', { 日付: formatShortDate(d) })).join(' ')}
         </p>
       )}
-      <div className="row">
+      <div className={styles.actionBar}>
         {addable.length > 0 && (
           <select
             aria-label="ほかの担当タスクを行に加える"
@@ -226,7 +269,12 @@ function Grid({ data }: { data: Timesheet }) {
             ))}
           </select>
         )}
+        <span className="spacer" />
+        <span className={changedCount > 0 ? styles.dirty : 'muted'} aria-live="polite">
+          {changedCount > 0 ? `保存していない変更が ${changedCount} マスあります` : '保存していない変更はありません'}
+        </span>
         <Button variant="primary" onClick={() => void submit()} disabled={save.isPending}>
+          <Icon name="check" size={16} />
           まとめて保存する
         </Button>
       </div>

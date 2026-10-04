@@ -6,7 +6,7 @@
 }
 
 .toolbar {
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-3) var(--space-4) var(--space-2);
   border-bottom: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
@@ -18,13 +18,100 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-2) var(--space-3);
 }
 
-.toolbarLabel {
+/* 1 行の左側（折り返す部分）と、右端に固定する操作（タスクを追加、ビュー） */
+.toolbarLine {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.toolbarLine > .toolbarRow {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 2 段目（どう表示するか）は、1 段目より控えめに見せる */
+.toolbarSub {
+  padding-top: var(--space-2);
+  border-top: 1px dashed var(--color-border);
+}
+
+/* まとまりごとに折り返す（まとまりの途中では折り返さない） */
+.group {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 900px) {
+  .group {
+    flex-wrap: wrap;
+  }
+}
+
+.groupLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   color: var(--color-text-muted);
   font-size: var(--font-size-small);
+  font-weight: 600;
   white-space: nowrap;
+}
+
+.divider {
+  width: 1px;
+  align-self: stretch;
+  min-height: 24px;
+  background: var(--color-border);
+}
+
+.toolbarSpacer {
+  flex: 1;
+}
+
+.chip {
+  border-radius: 999px;
+  border-color: var(--color-border);
+}
+
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.keyword {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 4px 0 var(--space-2);
+  border-radius: 999px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  line-height: 26px;
+}
+
+.keyword button {
+  display: inline-flex;
+  border: none;
+  background: transparent;
+  color: inherit;
+  border-radius: 50%;
+  padding: 2px;
+  cursor: pointer;
+}
+
+.keyword button:hover {
+  background: rgb(9 105 218 / 15%);
 }
 
 .toolbarRow select,
@@ -44,6 +131,7 @@
 
 .segmented button:first-child {
   border-radius: var(--radius) 0 0 var(--radius);
+  margin-left: 0;
 }
 
 .segmented button:last-child {
@@ -51,13 +139,36 @@
 }
 
 .notice {
-  padding: var(--space-1) var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 6px var(--space-4);
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.notice svg {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+}
+
+.noticeInfo {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+}
+
+.noticeInfo svg {
+  color: var(--color-primary);
 }
 
 .noticeWarning {
   background: var(--color-warning-soft);
+  color: var(--color-warning-strong);
+}
+
+.noticeWarning svg {
+  color: var(--color-warning);
 }
 
 .chart {
@@ -264,10 +375,42 @@
 .footer {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-4);
-  padding: var(--space-2) var(--space-3);
-  background: var(--color-surface);
+  align-items: center;
+  gap: var(--space-2) var(--space-5);
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-bg);
+  border-top: 1px solid var(--color-border);
   font-variant-numeric: tabular-nums;
+}
+
+.totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.total {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.total span {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
+.total strong {
+  font-weight: 700;
+}
+
+.hint {
+  flex-basis: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
 }
 
 .legend {
@@ -276,6 +419,8 @@
   gap: var(--space-3);
   align-items: center;
   font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+  margin-left: auto;
 }
 
 .legendItem {
@@ -292,6 +437,38 @@
 }
 
 .empty {
-  padding: var(--space-6);
+  padding: var(--space-5);
+  flex: 1;
+}
+
+/* 表示の設定（ポップオーバーの中） */
+.popField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.popField select {
+  color: var(--color-text);
+  font-weight: 400;
+}
+
+.popColumns {
+  border: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px var(--space-3);
+}
+
+.popColumns legend {
+  padding: 0;
+  margin-bottom: var(--space-1);
+  font-size: var(--font-size-small);
+  font-weight: 600;
   color: var(--color-text-muted);
 }

@@ -122,6 +122,7 @@ export function TaskFormDialog({ target, onClose, onSaved }: { target: TaskFormT
     <Dialog
       open
       title={editing ? 'タスクの編集' : 'タスクの登録'}
+      description={editing ? '変えたい項目だけを直して保存します。' : '必須の項目はチームとタイトルだけです。日程と工数は、決まってから入れても構いません。'}
       onClose={onClose}
       footer={
         <>
@@ -133,84 +134,101 @@ export function TaskFormDialog({ target, onClose, onSaved }: { target: TaskFormT
       }
     >
       <form id="task-form" className={styles.form} onSubmit={(e) => void submit(e)} noValidate>
-        {!editing && (
-          <Field label="チーム" required htmlFor="tf-team">
-            <select id="tf-team" value={teamId} onChange={(e) => setTeamId(e.target.value)}>
-              {writableTeams.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
-          </Field>
-        )}
-        <Field label="タイトル" required htmlFor="tf-title" errors={errors.title}>
-          <input id="tf-title" type="text" value={title} maxLength={200} disabled={!canPlan} onChange={(e) => setTitle(e.target.value)} />
-        </Field>
-        <Field label="説明" htmlFor="tf-desc" errors={errors.description} hint="プレーンテキスト（URL は自動でリンクになります）。4,000 字以内">
-          <textarea id="tf-desc" value={description} maxLength={4000} disabled={!canPlan} onChange={(e) => setDescription(e.target.value)} />
-        </Field>
-        <Field label="親タスク" htmlFor="tf-parent" errors={errors.parentId}>
-          <select id="tf-parent" value={parentId} disabled={!!editing && !editing.can.move} onChange={(e) => setParentId(e.target.value)}>
-            <option value="">（最上位）</option>
-            {parentOptions.map((o) => (
-              <option key={o.id} value={o.id}>
-                {'　'.repeat(o.depth - 1)}
-                {o.title}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="担当者" htmlFor="tf-assignee" errors={errors.assigneeId}>
-          {canAssign ? (
-            <select id="tf-assignee" value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)}>
-              <option value="">未割り当て</option>
-              {(team?.members ?? []).map((m) => (
-                <option key={m.userId} value={m.userId}>
-                  {m.displayName}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <input id="tf-assignee" type="text" disabled value={editing ? editing.assigneeName ?? '未割り当て' : me?.displayName ?? ''} />
-          )}
-        </Field>
-        <label className="row">
-          <input type="checkbox" checked={isMilestone} disabled={!canPlan || isSummary} onChange={(e) => setIsMilestone(e.target.checked)} />
-          マイルストーン（期間のない節目。終了日は開始日と同じになり、工数は入力できません）
-        </label>
-        {isSummary ? (
-          <p className="muted">{messageText('MSG-TSK-008')}</p>
-        ) : (
-          <div className={ui.grid2}>
-            <Field label={isMilestone ? '日付' : '予定開始日'} htmlFor="tf-start" errors={errors.plannedStart}>
-              <input id="tf-start" type="date" value={plannedStart} disabled={!canPlan} onChange={(e) => setPlannedStart(e.target.value)} />
+        <div className={styles.formSection}>
+          <h3 className={styles.formSectionTitle}>何をするか</h3>
+          {!editing && (
+            <Field label="チーム" required htmlFor="tf-team">
+              <select id="tf-team" value={teamId} onChange={(e) => setTeamId(e.target.value)}>
+                {writableTeams.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
             </Field>
-            {!isMilestone && (
-              <Field label="予定終了日" htmlFor="tf-end" errors={errors.plannedEnd}>
-                <input id="tf-end" type="date" value={plannedEnd} min={plannedStart || undefined} disabled={!canPlan} onChange={(e) => setPlannedEnd(e.target.value)} />
-              </Field>
-            )}
-            {!isMilestone && (
-              <Field label="予定工数（時間）" htmlFor="tf-minutes" errors={errors.plannedMinutes} hint="「1.5」または「1:30」。15 分単位">
-                <EffortInput id="tf-minutes" value={minutesText} onChange={setMinutesText} disabled={!canPlan} invalid={!!errors.plannedMinutes} />
-              </Field>
-            )}
+          )}
+          <Field label="タイトル" required htmlFor="tf-title" errors={errors.title}>
+            <input id="tf-title" type="text" value={title} maxLength={200} disabled={!canPlan} placeholder="例: 画面設計書のレビュー" onChange={(e) => setTitle(e.target.value)} />
+          </Field>
+          <Field label="説明" htmlFor="tf-desc" errors={errors.description} hint="プレーンテキスト（URL は自動でリンクになります）。4,000 字以内">
+            <textarea id="tf-desc" value={description} maxLength={4000} disabled={!canPlan} onChange={(e) => setDescription(e.target.value)} />
+          </Field>
+        </div>
+
+        <div className={styles.formSection}>
+          <h3 className={styles.formSectionTitle}>だれが・どこに</h3>
+          <div className={ui.grid2}>
+            <Field label="担当者" htmlFor="tf-assignee" errors={errors.assigneeId}>
+              {canAssign ? (
+                <select id="tf-assignee" value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)}>
+                  <option value="">未割り当て</option>
+                  {(team?.members ?? []).map((m) => (
+                    <option key={m.userId} value={m.userId}>
+                      {m.displayName}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input id="tf-assignee" type="text" disabled value={editing ? editing.assigneeName ?? '未割り当て' : me?.displayName ?? ''} />
+              )}
+            </Field>
+            <Field label="親タスク" htmlFor="tf-parent" errors={errors.parentId} hint="まとめタスクの下に入れると、日程と工数がまとめて集計されます">
+              <select id="tf-parent" value={parentId} disabled={!!editing && !editing.can.move} onChange={(e) => setParentId(e.target.value)}>
+                <option value="">（最上位）</option>
+                {parentOptions.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {'　'.repeat(o.depth - 1)}
+                    {o.title}
+                  </option>
+                ))}
+              </select>
+            </Field>
           </div>
-        )}
-        <div className={ui.grid2}>
-          <Field label="優先度" required htmlFor="tf-priority">
-            <select id="tf-priority" value={priority} disabled={!canPlan} onChange={(e) => setPriority(e.target.value as Priority)}>
-              {PRIORITY_ORDER.map((p) => (
-                <option key={p} value={p}>
-                  {PRIORITY[p].label}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="タグ" errors={errors.tagIds}>
-            <MultiSelect label="タグを選ぶ" options={(team?.tags ?? []).map((t) => ({ value: t.id, label: t.name }))} selected={tagIds} onChange={canPlan ? setTagIds : () => undefined} />
-          </Field>
+        </div>
+
+        <div className={styles.formSection}>
+          <h3 className={styles.formSectionTitle}>いつまでに・どれくらい</h3>
+          <label className="check-label">
+            <input type="checkbox" checked={isMilestone} disabled={!canPlan || isSummary} onChange={(e) => setIsMilestone(e.target.checked)} />
+            マイルストーンにする（期間のない節目。終了日は開始日と同じになり、工数は入力できません）
+          </label>
+          {isSummary ? (
+            <p className="muted">{messageText('MSG-TSK-008')}</p>
+          ) : (
+            <div className={ui.grid2}>
+              <Field label={isMilestone ? '日付' : '予定開始日'} htmlFor="tf-start" errors={errors.plannedStart}>
+                <input id="tf-start" type="date" value={plannedStart} disabled={!canPlan} onChange={(e) => setPlannedStart(e.target.value)} />
+              </Field>
+              {!isMilestone && (
+                <Field label="予定終了日" htmlFor="tf-end" errors={errors.plannedEnd}>
+                  <input id="tf-end" type="date" value={plannedEnd} min={plannedStart || undefined} disabled={!canPlan} onChange={(e) => setPlannedEnd(e.target.value)} />
+                </Field>
+              )}
+              {!isMilestone && (
+                <Field label="予定工数（時間）" htmlFor="tf-minutes" errors={errors.plannedMinutes} hint="「1.5」または「1:30」。15 分単位">
+                  <EffortInput id="tf-minutes" value={minutesText} onChange={setMinutesText} disabled={!canPlan} invalid={!!errors.plannedMinutes} />
+                </Field>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className={styles.formSection}>
+          <h3 className={styles.formSectionTitle}>分類</h3>
+          <div className={ui.grid2}>
+            <Field label="優先度" required htmlFor="tf-priority">
+              <select id="tf-priority" value={priority} disabled={!canPlan} onChange={(e) => setPriority(e.target.value as Priority)}>
+                {PRIORITY_ORDER.map((p) => (
+                  <option key={p} value={p}>
+                    {PRIORITY[p].label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="タグ" errors={errors.tagIds}>
+              <MultiSelect label="タグを選ぶ" options={(team?.tags ?? []).map((t) => ({ value: t.id, label: t.name }))} selected={tagIds} onChange={canPlan ? setTagIds : () => undefined} />
+            </Field>
+          </div>
         </div>
       </form>
     </Dialog>

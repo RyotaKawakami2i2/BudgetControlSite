@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { splitLinks } from './autolink';
-import { addDays, countWorkingDays, formatDate, formatShortDate, mondayOf, presetRange, proratedMinutes, toDay, toIso, todayIso } from './dates';
+import { addDays, countWorkingDays, dueLabel, formatDate, greeting, formatShortDate, mondayOf, presetRange, proratedMinutes, toDay, toIso, todayIso } from './dates';
 import { formatHm, formatHours, formatSignedHours, parseEffort } from './effort';
 import { fieldMessage, messageText } from './messages';
 
@@ -77,6 +77,22 @@ describe('日付', () => {
     expect(proratedMinutes('2026-10-05', '2026-10-16', 900, '2026-10-05', '2026-10-09', holidays)).toBe(500);
     expect(proratedMinutes('2026-10-05', '2026-10-16', 900, '2026-11-01', '2026-11-30', holidays)).toBe(0);
     expect(proratedMinutes(null, null, 900, '2026-10-01', '2026-10-31', holidays)).toBe(0);
+  });
+});
+
+describe('期限までの残り（一覧の表示）', () => {
+  it('超過・今日・明日・それ以降を言い分ける', () => {
+    expect(dueLabel('2026-10-01', '2026-10-04')).toEqual({ text: '3 日超過', tone: 'danger' });
+    expect(dueLabel('2026-10-04', '2026-10-04')).toEqual({ text: '今日まで', tone: 'warning' });
+    expect(dueLabel('2026-10-05', '2026-10-04')).toEqual({ text: '明日まで', tone: 'warning' });
+    expect(dueLabel('2026-10-10', '2026-10-04')).toEqual({ text: 'あと 6 日', tone: 'neutral' });
+    expect(dueLabel(null, '2026-10-04')).toBeNull();
+  });
+
+  it('あいさつは日本時間で決める', () => {
+    expect(greeting(new Date('2026-10-04T00:00:00Z'))).toBe('おはようございます'); // 9 時
+    expect(greeting(new Date('2026-10-04T05:00:00Z'))).toBe('こんにちは'); // 14 時
+    expect(greeting(new Date('2026-10-04T12:00:00Z'))).toBe('お疲れさまです'); // 21 時
   });
 });
 

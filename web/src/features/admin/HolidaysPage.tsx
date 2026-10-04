@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useHolidayMutations, useHolidays } from '../../api/hooks';
-import { Button, ErrorBox, Loading, describeError, useToast } from '../../components/ui';
+import { Icon } from '../../components/Icon';
+import { Button, EmptyState, ErrorBox, Loading, PageHeader, describeError, useToast } from '../../components/ui';
+import styles from './admin.module.css';
 import { formatDate, todayIso } from '../../lib/dates';
 
 /** 祝日の管理（SC-20。FR-ADM-07）。内閣府の祝日一覧の取り込みは、運用コマンド import-holidays で行う。 */
@@ -14,21 +16,24 @@ export function HolidaysPage() {
 
   return (
     <div className="page">
-      <div className="page-header">
-        <h1>祝日</h1>
-        <div className="row">
-          <Button size="small" onClick={() => setYear(year - 1)}>
-            ◀ {year - 1}年
-          </Button>
-          <strong>{year}年</strong>
-          <Button size="small" onClick={() => setYear(year + 1)}>
-            {year + 1}年 ▶
-          </Button>
-        </div>
-      </div>
-      <p className="muted">祝日は稼働日の計算（期待進捗、予定工数の按分）とガントの網掛けに使います。内閣府が公表する一覧は、運用コマンド import-holidays で取り込めます。</p>
+      <PageHeader
+        icon="calendar"
+        title="祝日"
+        description="祝日は稼働日の計算（期待進捗、予定工数の按分）とガントの網掛けに使います。内閣府が公表する一覧は、運用コマンド import-holidays で取り込めます。"
+        actions={
+          <span className="row">
+            <Button size="small" onClick={() => setYear(year - 1)}>
+              ◀ {year - 1}年
+            </Button>
+            <strong>{year}年</strong>
+            <Button size="small" onClick={() => setYear(year + 1)}>
+              {year + 1}年 ▶
+            </Button>
+          </span>
+        }
+      />
       <form
-        className="row"
+        className={['card', styles.formCard].join(' ')}
         onSubmit={(e) => {
           e.preventDefault();
           add.mutate(
@@ -37,40 +42,50 @@ export function HolidaysPage() {
           );
         }}
       >
-        <input type="date" aria-label="日付" value={date} onChange={(e) => setDate(e.target.value)} required />
-        <input type="text" aria-label="名前" placeholder="名前（例: 創立記念日）" value={name} maxLength={50} onChange={(e) => setName(e.target.value)} required />
+        <label>
+          日付
+          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+        </label>
+        <label>
+          名前
+          <input type="text" placeholder="例: 創立記念日" value={name} maxLength={50} onChange={(e) => setName(e.target.value)} required />
+        </label>
         <Button type="submit" variant="primary" disabled={!date || !name.trim()}>
-          登録する
+          <Icon name="plus" size={16} />
+          祝日を登録する
         </Button>
       </form>
       {isLoading && <Loading />}
       {error && <ErrorBox error={error} />}
-      {data && data.length === 0 && <p className="empty">この年の祝日は登録されていません。</p>}
+      {data && data.length === 0 && <EmptyState icon="calendar" title="この年の祝日は登録されていません" description="運用コマンド import-holidays で取り込むか、上から 1 日ずつ登録してください。" />}
       {data && data.length > 0 && (
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th scope="col">日付</th>
-              <th scope="col">名前</th>
-              <th scope="col">
-                <span className="visually-hidden">操作</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((h) => (
-              <tr key={h.date}>
-                <td>{formatDate(h.date)}</td>
-                <td>{h.name}</td>
-                <td>
-                  <Button size="small" variant="ghost" onClick={() => remove.mutate(h.date, { onError: (e) => toast.show('error', describeError(e)) })}>
-                    削除
-                  </Button>
-                </td>
+        <div className="table-wrap">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th scope="col">日付</th>
+                <th scope="col">名前</th>
+                <th scope="col">
+                  <span className="visually-hidden">操作</span>
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {data.map((h) => (
+                <tr key={h.date}>
+                  <td>{formatDate(h.date)}</td>
+                  <td>{h.name}</td>
+                  <td className="actions">
+                    <Button size="small" variant="dangerGhost" onClick={() => remove.mutate(h.date, { onError: (e) => toast.show('error', describeError(e)) })}>
+                      <Icon name="trash" size={14} />
+                      削除
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

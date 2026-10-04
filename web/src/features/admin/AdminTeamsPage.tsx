@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useAdminTeams, useTeamMutations } from '../../api/hooks';
 import type { UserSearchResult } from '../../api/types';
-import { Button, Dialog, ErrorBox, Field, Loading, describeError, fieldErrors, useToast } from '../../components/ui';
+import { Icon } from '../../components/Icon';
+import { Button, Dialog, EmptyState, ErrorBox, Field, Loading, PageHeader, Pill, describeError, fieldErrors, useToast } from '../../components/ui';
 import { formatDateTime } from '../../lib/dates';
 import { messageText } from '../../lib/messages';
 import { UserPicker } from '../teams/UserPicker';
@@ -14,41 +15,57 @@ export function AdminTeamsPage() {
 
   return (
     <div className="page">
-      <div className="page-header">
-        <h1>チーム管理</h1>
-        <Button variant="primary" onClick={() => setCreating(true)}>
-          チーム（プロジェクト）を作る
-        </Button>
-      </div>
+      <PageHeader
+        icon="team"
+        title="チーム管理"
+        description="すべてのチームの一覧です。管理者は、リーダーを指定してチームを作れます。所属していないチームは閲覧だけができます。"
+        actions={
+          <Button variant="primary" onClick={() => setCreating(true)}>
+            <Icon name="plus" size={16} />
+            チーム（プロジェクト）を作る
+          </Button>
+        }
+      />
       {isLoading && <Loading />}
       {error && <ErrorBox error={error} />}
-      {data && (
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th scope="col">チーム</th>
-              <th scope="col">リーダー</th>
-              <th scope="col" className="num">
-                メンバー
-              </th>
-              <th scope="col">作成日時</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((t) => (
-              <tr key={t.id}>
-                <td>
-                  <Link to={`/teams/${t.id}`}>{t.name}</Link>
-                  {t.archived && <span className="muted">（アーカイブ）</span>}
-                  {t.description && <div className="muted">{t.description}</div>}
-                </td>
-                <td>{t.leaders.length > 0 ? t.leaders.join('、') : '！ リーダーがいません'}</td>
-                <td className="num">{t.memberCount}人</td>
-                <td>{formatDateTime(t.createdAt)}</td>
+      {data && data.length === 0 && <EmptyState icon="team" title="チームはまだありません" description="「チーム（プロジェクト）を作る」から、リーダーを指定して作ってください。" />}
+      {data && data.length > 0 && (
+        <div className="table-wrap">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th scope="col">チーム</th>
+                <th scope="col">リーダー</th>
+                <th scope="col" className="num">
+                  メンバー
+                </th>
+                <th scope="col">作成日時</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {data.map((t) => (
+                <tr key={t.id}>
+                  <td>
+                    <span className="row">
+                      <Link to={`/teams/${t.id}`}>
+                        <strong>{t.name}</strong>
+                      </Link>
+                      {t.archived && (
+                        <Pill icon="archive" tone="neutral">
+                          アーカイブ
+                        </Pill>
+                      )}
+                    </span>
+                    {t.description && <div className="muted small">{t.description}</div>}
+                  </td>
+                  <td>{t.leaders.length > 0 ? t.leaders.join('、') : <Pill tone="danger">！ リーダーがいません</Pill>}</td>
+                  <td className="num">{t.memberCount}人</td>
+                  <td className="nowrap muted">{formatDateTime(t.createdAt)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
       {creating && <CreateWithLeaderDialog onClose={() => setCreating(false)} />}
     </div>

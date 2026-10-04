@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { useDeletedTasks, useMe, useRestoreTask, useTeam, useTeamMutations } from '../../api/hooks';
 import type { Tag, TagColor, TeamDetail } from '../../api/types';
-import { Button, ConfirmDialog, Dialog, ErrorBox, Field, Loading, TagChip, describeError, fieldErrors, useToast } from '../../components/ui';
+import { Icon } from '../../components/Icon';
+import { Avatar, Button, Card, ConfirmDialog, Dialog, EmptyState, ErrorBox, Field, Loading, PageHeader, Pill, TagChip, describeError, fieldErrors, ui, useToast } from '../../components/ui';
 import { formatDateTime } from '../../lib/dates';
 import { ROLE, TAG_COLORS, TAG_COLOR_LABEL } from '../../lib/labels';
 import { UserPicker } from './UserPicker';
 import { useSyncCurrentTeam } from '../../layout/context';
+import styles from './teams.module.css';
 
 /** チームの詳細（SC-12。FR-TEM-01〜07）。メンバーと役割、タグ、名前・説明の変更、アーカイブ、削除したタスクの復元。 */
 export function TeamDetailPage() {
@@ -31,97 +33,146 @@ function TeamDetail({ team }: { team: TeamDetail }) {
 
   return (
     <div className="page">
-      <div className="page-header">
-        <h1>
-          {team.name}
-          {team.archived && <span className="muted">（アーカイブ）</span>}
-        </h1>
-        <Link to={`/gantt?teams=${team.id}`}>ガントを開く</Link>
-        {team.can.viewReport && <Link to={`/teams/${team.id}/report`}>担当者別の予実</Link>}
-        {team.can.update && !team.archived && <Button onClick={() => setEditing(true)}>名前・説明を変える</Button>}
+      <PageHeader
+        icon="team"
+        title={team.name}
+        description={team.description ?? 'チームの説明はありません。'}
+        meta={
+          <span className="row">
+            あなたの役割 <Pill tone={team.role === 'leader' ? 'primary' : 'neutral'}>{ROLE[team.role]}</Pill>
+            {team.archived && (
+              <Pill icon="archive" tone="warning">
+                アーカイブ済み（読み取り専用）
+              </Pill>
+            )}
+          </span>
+        }
+        actions={
+          <>
+            <Link to={`/gantt?teams=${team.id}`} className={ui.button}>
+              <Icon name="gantt" size={16} />
+              ガントを開く
+            </Link>
+            {team.can.viewReport && (
+              <Link to={`/teams/${team.id}/report`} className={ui.button}>
+                <Icon name="report" size={16} />
+                担当者別の予実
+              </Link>
+            )}
+            {team.can.update && !team.archived && (
+              <Button onClick={() => setEditing(true)}>
+                <Icon name="edit" size={16} />
+                名前・説明を変える
+              </Button>
+            )}
+          </>
+        }
+      />
+
+      <div className="stack-lg">
+        <Card icon="user" title="メンバー" count={team.members.length} description={team.can.manageMembers ? 'リーダーは、メンバーの追加・役割の変更・チームから外すことができます。' : undefined}>
+          <div className="table-wrap">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th scope="col">名前</th>
+                  {team.members.some((x) => x.email) && <th scope="col">メールアドレス</th>}
+                  <th scope="col">役割</th>
+                  <th scope="col">追加した日時</th>
+                  {team.can.manageMembers && (
+                    <th scope="col">
+                      <span className="visually-hidden">操作</span>
+                    </th>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {team.members.map((member) => (
+                  <tr key={member.userId}>
+                    <td>
+                      <span className={styles.person}>
+                        <Avatar name={member.displayName} />
+                        <span>
+                          {member.displayName}
+                          {member.userId === me?.id && <span className="muted">（自分）</span>}
+                        </span>
+                        {member.disabled && <Pill tone="neutral">無効</Pill>}
+                      </span>
+                    </td>
+                    {team.members.some((x) => x.email) && <td>{member.email}</td>}
+                    <td>
+                      <Pill tone={member.role === 'leader' ? 'primary' : 'neutral'}>{ROLE[member.role]}</Pill>
+                    </td>
+                    <td className="nowrap muted">{formatDateTime(member.joinedAt)}</td>
+                    {team.can.manageMembers && (
+                      <td className="actions">
+                        {!team.archived && (
+                          <span className="row">
+                            <Button
+                              size="small"
+                              onClick={() =>
+                                run(
+                                  m.changeRole.mutateAsync({ id: team.id, userId: member.userId, role: member.role === 'leader' ? 'member' : 'leader' }),
+                                  '役割を変えました。',
+                                )
+                              }
+                            >
+                              {member.role === 'leader' ? 'リーダーから外す' : 'リーダーにする'}
+                            </Button>
+                            <Button size="small" variant="dangerGhost" onClick={() => setRemoving({ userId: member.userId, name: member.displayName })}>
+                              チームから外す
+                            </Button>
+                          </span>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {team.can.manageMembers && !team.archived && (
+            <div className={styles.addMember}>
+              <h3>メンバーを追加する</h3>
+              <p className="muted small">名前かメールアドレスの一部で検索し、「選ぶ」を押すとすぐに追加します。</p>
+              <label className={styles.inlineField}>
+                追加するときの役割
+                <select value={addRole} onChange={(e) => setAddRole(e.target.value as 'member' | 'leader')}>
+                  <option value="member">メンバー</option>
+                  <option value="leader">リーダー</option>
+                </select>
+              </label>
+              <UserPicker
+                label="追加する利用者を検索"
+                exclude={team.members.map((x) => x.userId)}
+                onPick={(u) => run(m.addMember.mutateAsync({ id: team.id, userId: u.id, role: addRole }), `${u.displayName} さんを追加しました。`)}
+              />
+            </div>
+          )}
+        </Card>
+
+        <Tags team={team} />
+        {team.can.restore && <DeletedTasks teamId={team.id} />}
+
         {(team.can.archive || team.can.unarchive) && (
-          <Button variant={team.archived ? 'default' : 'danger'} onClick={() => setArchiving(true)}>
-            {team.archived ? 'アーカイブを解除する' : 'アーカイブする'}
-          </Button>
+          <Card icon="warning" tone="warning" title="チームの設定（注意が必要な操作）">
+            <div className={styles.dangerRow}>
+              <div>
+                <strong>{team.archived ? 'アーカイブを解除する' : 'チームをアーカイブする'}</strong>
+                <p className="muted small">
+                  {team.archived
+                    ? '解除すると、タスクの登録や変更がまたできるようになります。'
+                    : 'プロジェクトが終わったら、アーカイブして読み取り専用にします。タスクと作業実績は残り、あとで解除できます。'}
+                </p>
+              </div>
+              <Button variant={team.archived ? 'default' : 'dangerGhost'} onClick={() => setArchiving(true)}>
+                <Icon name="archive" size={16} />
+                {team.archived ? 'アーカイブを解除する' : 'アーカイブする'}
+              </Button>
+            </div>
+          </Card>
         )}
       </div>
-      <p className="muted">あなたの役割: {ROLE[team.role]}</p>
-      {team.description && <p className="prewrap">{team.description}</p>}
-
-      <section className="card stack">
-        <h2>メンバー（{team.members.length}人）</h2>
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th scope="col">名前</th>
-              {team.members.some((x) => x.email) && <th scope="col">メールアドレス</th>}
-              <th scope="col">役割</th>
-              <th scope="col">追加した日時</th>
-              {team.can.manageMembers && (
-                <th scope="col">
-                  <span className="visually-hidden">操作</span>
-                </th>
-              )}
-            </tr>
-          </thead>
-          <tbody>
-            {team.members.map((member) => (
-              <tr key={member.userId}>
-                <td>
-                  {member.displayName}
-                  {member.disabled && <span className="muted">（無効）</span>}
-                  {member.userId === me?.id && <span className="muted">（自分）</span>}
-                </td>
-                {team.members.some((x) => x.email) && <td>{member.email}</td>}
-                <td>{ROLE[member.role]}</td>
-                <td>{formatDateTime(member.joinedAt)}</td>
-                {team.can.manageMembers && (
-                  <td className="nowrap">
-                    {!team.archived && (
-                      <>
-                        <Button
-                          size="small"
-                          onClick={() =>
-                            run(
-                              m.changeRole.mutateAsync({ id: team.id, userId: member.userId, role: member.role === 'leader' ? 'member' : 'leader' }),
-                              '役割を変えました。',
-                            )
-                          }
-                        >
-                          {member.role === 'leader' ? 'リーダーから外す' : 'リーダーにする'}
-                        </Button>{' '}
-                        <Button size="small" variant="ghost" onClick={() => setRemoving({ userId: member.userId, name: member.displayName })}>
-                          チームから外す
-                        </Button>
-                      </>
-                    )}
-                  </td>
-                )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {team.can.manageMembers && !team.archived && (
-          <div className="stack">
-            <h3>メンバーを追加する</h3>
-            <label className="row">
-              役割
-              <select value={addRole} onChange={(e) => setAddRole(e.target.value as 'member' | 'leader')}>
-                <option value="member">メンバー</option>
-                <option value="leader">リーダー</option>
-              </select>
-            </label>
-            <UserPicker
-              label="追加する利用者を検索"
-              exclude={team.members.map((x) => x.userId)}
-              onPick={(u) => run(m.addMember.mutateAsync({ id: team.id, userId: u.id, role: addRole }), `${u.displayName} さんを追加しました。`)}
-            />
-          </div>
-        )}
-      </section>
-
-      <Tags team={team} />
-      {team.can.restore && <DeletedTasks teamId={team.id} />}
 
       {editing && <EditTeamDialog team={team} onClose={() => setEditing(false)} />}
       <ConfirmDialog
@@ -173,6 +224,7 @@ function EditTeamDialog({ team, onClose }: { team: TeamDetail; onClose: () => vo
     <Dialog
       open
       title="チームの名前・説明"
+      description="チームの一覧やガントに表示される名前と説明を変えます。"
       onClose={onClose}
       footer={
         <>
@@ -218,24 +270,26 @@ function Tags({ team }: { team: TeamDetail }) {
   const manage = team.can.manageTags && !team.archived;
 
   return (
-    <section className="card stack">
-      <h2>タグ</h2>
-      {team.tags.length === 0 && <p className="muted">タグはありません。</p>}
-      <ul className="stack">
+    <Card icon="tag" title="タグ" count={team.tags.length} description="タスクの分類に使います。ガントとタスク一覧で、タグで絞り込めます。">
+      {team.tags.length === 0 && <EmptyState compact icon="tag" title="タグはまだありません。" />}
+      <ul className={styles.tags}>
         {team.tags.map((tag) => (
-          <li key={tag.id} className="row">
+          <li key={tag.id} className={styles.tagItem}>
             <TagChip tag={tag} />
             {manage && (
               <>
-                <Button size="small" variant="ghost" onClick={() => setEditing(tag)}>
-                  変更
+                <Button size="small" variant="ghost" iconOnly aria-label={`タグ「${tag.name}」を変更`} title="変更" onClick={() => setEditing(tag)}>
+                  <Icon name="edit" size={14} />
                 </Button>
                 <Button
                   size="small"
-                  variant="ghost"
+                  variant="dangerGhost"
+                  iconOnly
+                  aria-label={`タグ「${tag.name}」を削除`}
+                  title="削除"
                   onClick={() => m.deleteTag.mutate(tag.id, { onSuccess: () => toast.show('success', 'タグを削除しました。'), onError: (e) => toast.show('error', describeError(e)) })}
                 >
-                  削除
+                  <Icon name="trash" size={14} />
                 </Button>
               </>
             )}
@@ -244,7 +298,7 @@ function Tags({ team }: { team: TeamDetail }) {
       </ul>
       {manage && (
         <form
-          className="row"
+          className={styles.tagForm}
           onSubmit={(e) => {
             e.preventDefault();
             m.createTag.mutate(
@@ -256,6 +310,7 @@ function Tags({ team }: { team: TeamDetail }) {
           <input type="text" aria-label="新しいタグの名前" placeholder="タグの名前（30 字以内）" value={name} maxLength={30} onChange={(e) => setName(e.target.value)} />
           <ColorSelect value={color} onChange={setColor} />
           <Button type="submit" disabled={!name.trim()}>
+            <Icon name="plus" size={14} />
             タグを作る
           </Button>
         </form>
@@ -292,7 +347,7 @@ function Tags({ team }: { team: TeamDetail }) {
           </div>
         </Dialog>
       )}
-    </section>
+    </Card>
   );
 }
 
@@ -315,23 +370,22 @@ function DeletedTasks({ teamId }: { teamId: string }) {
   const restore = useRestoreTask();
   const toast = useToast();
   return (
-    <section className="card stack">
-      <h2>削除したタスク</h2>
+    <Card icon="trash" title="削除したタスク" description="削除から 30 日以内のタスクは、リーダーが元に戻せます。">
       {!open ? (
         <div>
           <Button onClick={() => setOpen(true)}>30 日以内に削除したタスクを表示する</Button>
         </div>
       ) : (
         <>
-          {data?.length === 0 && <p className="muted">ありません。</p>}
-          <ul className="stack">
+          {data?.length === 0 && <EmptyState compact icon="check" title="30 日以内に削除したタスクはありません。" />}
+          <ul className={styles.deleted}>
             {data?.map((t) => (
-              <li key={t.id} className="row">
-                <span>
+              <li key={t.id}>
+                <span className={styles.deletedTitle}>
                   {t.title}
                   {t.descendantCount > 0 && <span className="muted">（子タスク {t.descendantCount} 件を含む）</span>}
                 </span>
-                <span className="muted">
+                <span className="muted small">
                   {formatDateTime(t.deletedAt)} {t.deletedByName}
                 </span>
                 <Button
@@ -347,6 +401,6 @@ function DeletedTasks({ teamId }: { teamId: string }) {
           </ul>
         </>
       )}
-    </section>
+    </Card>
   );
 }

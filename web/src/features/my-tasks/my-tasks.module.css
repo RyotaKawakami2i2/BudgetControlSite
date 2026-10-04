@@ -1,0 +1,97 @@
+.taskCell {
+  min-width: 220px;
+}
+
+.path {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
+.marks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+}
+
+.due {
+  display: inline-block;
+  font-size: var(--font-size-small);
+  font-weight: 600;
+}
+
+.due_danger {
+  color: var(--color-danger);
+}
+
+.due_warning {
+  color: var(--color-warning-strong);
+}
+
+.due_neutral {
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+.progress {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.rowActions {
+  display: inline-flex;
+  gap: var(--space-1);
+}
+
+/* ---------------------------------------------------------------- マイタスクの画面 */
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.summaryItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 6px var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.summaryItem:hover {
+  border-color: var(--color-primary);
+  color: var(--color-text);
+}
+
+.summaryCount {
+  min-width: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--color-surface-strong);
+  font-size: var(--font-size-small);
+  text-align: center;
+}
+
+.summaryDanger {
+  border-color: var(--color-danger);
+  color: var(--color-danger-strong);
+  background: var(--color-danger-soft);
+}
+
+.summaryDanger .summaryCount {
+  background: var(--color-danger);
+  color: #ffffff;
+}
+
+.summaryEmpty {
+  color: var(--color-text-muted);
+  font-weight: 400;
+}

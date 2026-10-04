@@ -181,6 +181,11 @@ export function hasFilters(c: GanttConditions): boolean {
   );
 }
 
+/** 絞り込みの条件だけを解除する（チーム、期間、まとめ方などの表示の条件は残す）。 */
+export function clearFilters(c: GanttConditions): GanttConditions {
+  return { ...c, assignees: [], status: [], priority: [], tags: [], flags: [], milestones: false, due: null, q: '' };
+}
+
 /** よく使う条件（FR-GNT-21）。 */
 export type QuickFilter = 'mine' | 'due_this_week' | 'delayed' | 'unassigned';
 

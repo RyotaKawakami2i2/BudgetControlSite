@@ -1,10 +1,11 @@
 /* 共通の部品のスタイル（基本設計書 4.4）。色と余白は tokens.css の変数だけを使う */
 
+/* ---------------------------------------------------------------- ボタン */
 .button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-1);
+  gap: 6px;
   min-height: 32px;
   padding: 0 var(--space-3);
   border: 1px solid var(--color-border-input);
@@ -15,14 +16,20 @@
   font-weight: 600;
   white-space: nowrap;
   text-decoration: none;
+  transition: background-color 0.12s, border-color 0.12s, box-shadow 0.12s;
 }
 
 .button:hover:not(:disabled) {
   background: var(--color-surface);
 }
 
+.button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
 .button:disabled {
-  opacity: 0.55;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
@@ -30,10 +37,12 @@
   background: var(--color-primary);
   border-color: var(--color-primary);
   color: #ffffff;
+  box-shadow: var(--shadow-sm);
 }
 
 .primary:hover:not(:disabled) {
   background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
 }
 
 .danger {
@@ -44,6 +53,18 @@
 
 .danger:hover:not(:disabled) {
   background: var(--color-danger-hover);
+}
+
+/* 取り消せない操作を、目立たせすぎずに置く */
+.dangerGhost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-danger);
+}
+
+.dangerGhost:hover:not(:disabled) {
+  background: var(--color-danger-soft);
+  color: var(--color-danger-strong);
 }
 
 .ghost {
@@ -57,14 +78,19 @@
 }
 
 .small {
-  min-height: 26px;
-  padding: 0 var(--space-2);
+  min-height: 28px;
+  padding: 0 10px;
   font-size: var(--font-size-small);
+  gap: var(--space-1);
 }
 
 .iconOnly {
   padding: 0;
   width: 32px;
+}
+
+.small.iconOnly {
+  width: 28px;
 }
 
 /* 文字のリンクのように見せるボタン（表の中のタスク名など） */
@@ -87,13 +113,17 @@
 .pressed {
   background: var(--color-primary-soft);
   border-color: var(--color-primary);
-  color: #0550ae;
+  color: var(--color-primary-strong);
 }
 
-/* ダイアログ（HTML 標準の dialog 要素） */
+.pressed:hover:not(:disabled) {
+  background: var(--color-primary-soft);
+}
+
+/* ---------------------------------------------------------------- ダイアログ（HTML 標準の dialog 要素） */
 .dialog {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
+  border: none;
+  border-radius: var(--radius-lg);
   padding: 0;
   max-width: min(640px, calc(100vw - 32px));
   width: 100%;
@@ -107,18 +137,29 @@
 
 .dialogHeader {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  padding: var(--space-3) var(--space-4);
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5) var(--space-3);
   border-bottom: 1px solid var(--color-border);
 }
 
-.dialogHeader h2 {
+.dialogTitle {
+  min-width: 0;
+}
+
+.dialogTitle h2 {
   margin: 0;
 }
 
+.dialogDescription {
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
 .dialogBody {
-  padding: var(--space-4);
+  padding: var(--space-4) var(--space-5);
   max-height: 70vh;
   overflow: auto;
 }
@@ -127,12 +168,13 @@
   display: flex;
   justify-content: flex-end;
   gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-3) var(--space-5);
   border-top: 1px solid var(--color-border);
   background: var(--color-surface);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
 }
 
-/* お知らせ（画面上部） */
+/* ---------------------------------------------------------------- お知らせ（画面上部） */
 .toasts {
   position: fixed;
   top: calc(var(--topbar-height) + var(--space-2));
@@ -149,58 +191,164 @@
   display: flex;
   align-items: flex-start;
   gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
   border-radius: var(--radius);
-  border: 1px solid;
+  border: 1px solid var(--color-border);
+  border-left-width: 4px;
   box-shadow: var(--shadow);
   background: var(--color-bg);
+  animation: toast-in 0.16s ease-out;
 }
 
 .toast p {
   flex: 1;
-  margin: 0;
+  margin: 2px 0 0;
+}
+
+.toastIcon {
+  display: inline-flex;
+  margin-top: 2px;
 }
 
 .toastSuccess {
-  border-color: var(--color-success);
-  background: var(--color-success-soft);
+  border-left-color: var(--color-success);
+}
+
+.toastSuccess .toastIcon {
+  color: var(--color-success);
 }
 
 .toastError {
-  border-color: var(--color-danger);
+  border-left-color: var(--color-danger);
   background: var(--color-danger-soft);
 }
 
-.toastInfo {
-  border-color: var(--color-primary);
-  background: var(--color-primary-soft);
+.toastError .toastIcon {
+  color: var(--color-danger);
 }
 
-/* 印 */
+.toastInfo {
+  border-left-color: var(--color-primary);
+}
+
+.toastInfo .toastIcon {
+  color: var(--color-primary);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+/* ---------------------------------------------------------------- 印 */
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   padding: 0 var(--space-2);
   border-radius: 999px;
   font-size: var(--font-size-small);
-  line-height: 20px;
-  border: 1px solid currentColor;
+  font-weight: 600;
+  line-height: 22px;
   white-space: nowrap;
-  background: var(--color-bg);
+  background: var(--color-surface-strong);
+  color: var(--color-text);
 }
 
+.statusNotStarted {
+  background: var(--color-surface-strong);
+  color: var(--color-status-not-started);
+}
+
+.statusInProgress {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+}
+
+.statusOnHold {
+  background: var(--color-warning-soft);
+  color: var(--color-warning-strong);
+}
+
+.statusDone {
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.statusCancelled {
+  background: var(--color-surface-strong);
+  color: var(--color-status-cancelled);
+  text-decoration: line-through;
+}
+
+.priorityHigh {
+  background: var(--color-danger-soft);
+  color: var(--color-danger-strong);
+}
+
+.priorityMedium {
+  background: var(--color-surface-strong);
+  color: var(--color-text);
+}
+
+.priorityLow {
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+}
+
+/* 遅れ・超過（薄い赤の面に濃い赤の文字。たくさん並んでも目が疲れないように） */
 .flag {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  padding: 0 var(--space-1);
+  padding: 0 6px;
   border-radius: var(--radius);
   font-size: var(--font-size-small);
+  font-weight: 600;
   line-height: 20px;
-  color: #ffffff;
-  background: var(--color-danger);
+  color: var(--color-danger-strong);
+  background: var(--color-danger-soft);
+  border: 1px solid rgb(207 34 46 / 25%);
   white-space: nowrap;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 var(--space-2);
+  border-radius: 999px;
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  line-height: 22px;
+  white-space: nowrap;
+}
+
+.pill_neutral {
+  background: var(--color-surface-strong);
+  color: var(--color-text);
+}
+
+.pill_primary {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+}
+
+.pill_success {
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.pill_warning {
+  background: var(--color-warning-soft);
+  color: var(--color-warning-strong);
+}
+
+.pill_danger {
+  background: var(--color-danger-soft);
+  color: var(--color-danger-strong);
 }
 
 .tag {
@@ -208,26 +356,34 @@
   padding: 0 var(--space-2);
   border-radius: var(--radius);
   font-size: var(--font-size-small);
-  line-height: 20px;
+  font-weight: 600;
+  line-height: 22px;
   white-space: nowrap;
 }
 
-/* 入力欄 */
+/* ---------------------------------------------------------------- 入力欄 */
 .field {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: 6px;
   min-width: 0;
 }
 
 .fieldLabel {
   font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .required {
-  color: var(--color-danger);
-  margin-left: var(--space-1);
-  font-weight: 400;
+  padding: 0 6px;
+  border-radius: var(--radius);
+  background: var(--color-danger-soft);
+  color: var(--color-danger-strong);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
 }
 
 .fieldHint {
@@ -238,6 +394,7 @@
 .fieldError {
   color: var(--color-danger);
   font-size: var(--font-size-small);
+  font-weight: 600;
 }
 
 .invalid {
@@ -250,7 +407,7 @@
   gap: var(--space-3);
 }
 
-/* 複数選択 */
+/* ---------------------------------------------------------------- 複数選択 */
 .multi {
   position: relative;
   display: inline-block;
@@ -266,16 +423,27 @@
   overflow: auto;
   background: var(--color-bg);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
   padding: var(--space-2);
+}
+
+.popoverPanel {
+  right: auto;
+  left: 0;
+  max-height: none;
+  min-width: 300px;
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
 }
 
 .multiOption {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-1) var(--space-2);
+  padding: 6px var(--space-2);
   border-radius: var(--radius);
   cursor: pointer;
   white-space: nowrap;
@@ -292,12 +460,12 @@
   border-radius: 999px;
   background: var(--color-primary);
   color: #ffffff;
-  font-size: var(--font-size-small);
+  font-size: 11px;
   line-height: 18px;
   text-align: center;
 }
 
-/* タブ */
+/* ---------------------------------------------------------------- タブ */
 .tabs {
   display: flex;
   gap: var(--space-1);
@@ -313,13 +481,20 @@
   margin-bottom: -1px;
   color: var(--color-text-muted);
   font-weight: 600;
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.tab:hover {
+  color: var(--color-text);
+  background: var(--color-surface);
 }
 
 .tabActive {
-  color: var(--color-text);
+  color: var(--color-primary-strong);
   border-bottom-color: var(--color-primary);
 }
 
+/* ---------------------------------------------------------------- 進捗の棒 */
 .progressBar {
   display: inline-block;
   width: 64px;
@@ -330,21 +505,265 @@
   vertical-align: middle;
 }
 
+.progressWide {
+  display: block;
+  width: 100%;
+}
+
 .progressFill {
   display: block;
   height: 100%;
+  border-radius: 4px;
   background: var(--color-primary);
 }
 
+.progressSuccess {
+  background: var(--color-success);
+}
+
+.progressDanger {
+  background: var(--color-danger);
+}
+
+/* ---------------------------------------------------------------- 読み込み中、エラー */
 .spinner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   color: var(--color-text-muted);
-  padding: var(--space-4);
+  padding: var(--space-5);
+  margin: 0;
+}
+
+.spinnerIcon {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--color-surface-strong);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinnerIcon,
+  .toast {
+    animation: none;
+  }
 }
 
 .errorBox {
-  border: 1px solid var(--color-danger);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  border: 1px solid rgb(207 34 46 / 40%);
   background: var(--color-danger-soft);
+  color: var(--color-danger-strong);
   border-radius: var(--radius);
   padding: var(--space-2) var(--space-3);
   margin-bottom: var(--space-3);
+}
+
+/* ---------------------------------------------------------------- 画面の見出し */
+.pageHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-5);
+}
+
+.pageIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-lg);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  flex-shrink: 0;
+}
+
+.pageTitle {
+  flex: 1;
+  min-width: 240px;
+}
+
+.pageTitle h1 {
+  margin: 0;
+}
+
+.pageDescription {
+  margin: 2px 0 0;
+  color: var(--color-text-muted);
+}
+
+.pageMeta {
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.pageActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+/* ---------------------------------------------------------------- カード */
+.cardTone {
+  position: relative;
+}
+
+.card_danger {
+  border-top: 3px solid var(--color-danger);
+}
+
+.card_warning {
+  border-top: 3px solid var(--color-warning);
+}
+
+.card_primary {
+  border-top: 3px solid var(--color-primary);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.cardIcon {
+  display: inline-flex;
+  color: var(--color-text-muted);
+}
+
+.card_danger .cardIcon {
+  color: var(--color-danger);
+}
+
+.card_warning .cardIcon {
+  color: var(--color-warning);
+}
+
+.card_primary .cardIcon {
+  color: var(--color-primary);
+}
+
+.cardTitle {
+  margin: 0;
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-large);
+}
+
+.cardCount {
+  display: inline-block;
+  min-width: 24px;
+  padding: 0 var(--space-2);
+  border-radius: 999px;
+  background: var(--color-surface-strong);
+  color: var(--color-text);
+  font-size: var(--font-size-small);
+  line-height: 22px;
+  text-align: center;
+}
+
+.card_danger .cardCount {
+  background: var(--color-danger-soft);
+  color: var(--color-danger-strong);
+}
+
+.cardActions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.cardDescription {
+  margin: calc(var(--space-2) * -1) 0 var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
+/* ---------------------------------------------------------------- 空の表示 */
+.emptyState {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.emptyCompact {
+  padding: var(--space-2) var(--space-3);
+  align-items: center;
+  border-style: none;
+}
+
+.emptyIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.emptyCompact .emptyIcon {
+  width: 28px;
+  height: 28px;
+}
+
+.emptyTitle {
+  margin: 0;
+  font-weight: 600;
+}
+
+.emptyCompact .emptyTitle {
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+.emptyDescription {
+  margin: 2px 0 0;
+  color: var(--color-text-muted);
+}
+
+.emptyAction {
+  margin-top: var(--space-3);
+}
+
+/* ---------------------------------------------------------------- 利用者の頭文字 */
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: var(--font-size-small);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.avatarSmall {
+  width: 22px;
+  height: 22px;
+  font-size: 11px;
 }

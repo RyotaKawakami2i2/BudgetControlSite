@@ -7,6 +7,7 @@
   --color-text: #1f2328;
   --color-text-muted: #59636e;
   --color-bg: #ffffff;
+  --color-page: #f6f8fa;          /* 画面の地の色。内容は白いカードに載せて、まとまりを分かりやすくする */
   --color-surface: #f6f8fa;
   --color-surface-strong: #eaeef2;
   --color-border: #d1d9e0;        /* 区切り線（装飾だけに使う） */
@@ -17,13 +18,17 @@
   --color-primary: #0969da;
   --color-primary-hover: #0757b6;
   --color-primary-soft: #ddf4ff;
+  --color-primary-strong: #0550ae; /* 薄い主色の面に載せる文字（6.9:1） */
   --color-danger: #cf222e;
   --color-danger-hover: #a40e26;
   --color-danger-soft: #ffebe9;
+  --color-danger-strong: #a40e26;  /* 薄い赤の面に載せる文字（6.6:1） */
   --color-success: #1a7f37;
   --color-success-soft: #dafbe1;
+  --color-success-strong: #116329; /* 薄い緑の面に載せる文字（6.9:1） */
   --color-warning: #9a6700;
   --color-warning-soft: #fff8c5;
+  --color-warning-strong: #7d4e00; /* 薄い黄の面に載せる文字（6.9:1） */
   --color-milestone: #8250df;
 
   --color-status-not-started: #59636e;
@@ -55,6 +60,7 @@
   --font-size-small: 12px;
   --font-size-large: 16px;
   --font-size-title: 20px;
+  --font-size-number: 28px;       /* ホームの件数など、数字を大きく見せるところ */
   --line-height: 1.6;
 
   /* 余白（4px の倍数） */
@@ -64,12 +70,17 @@
   --space-4: 16px;
   --space-5: 24px;
   --space-6: 32px;
+  --space-7: 48px;
 
   --radius: 6px;
+  --radius-lg: 10px;              /* カード */
+  --shadow-sm: 0 1px 2px rgb(31 35 40 / 6%);
   --shadow: 0 1px 3px rgb(31 35 40 / 12%), 0 8px 24px rgb(66 74 83 / 12%);
+  --focus-ring: 0 0 0 3px rgb(9 105 218 / 30%);
 
   /* 画面の枠 */
   --topbar-height: 48px;
   --sidenav-width: 200px;
+  --sidenav-collapsed-width: 56px;
   --panel-width: 480px;
 }

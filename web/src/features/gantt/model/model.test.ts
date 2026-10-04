@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { GanttTask } from '../../../api/types';
-import { applyQuickFilter, DEFAULT_CONDITIONS, fromSearchParams, fromViewConditions, isQuickFilterOn, toSearchParams, toViewConditions } from './conditions';
+import { applyQuickFilter, clearFilters, DEFAULT_CONDITIONS, hasFilters, fromSearchParams, fromViewConditions, isQuickFilterOn, toSearchParams, toViewConditions } from './conditions';
 import { buildRows, matches, teamBar, type RowInput } from './rows';
 import { ticks, widthOf, xOf } from './scale';
 
@@ -166,3 +166,17 @@ describe('時間軸', () => {
     expect(upper[0]!.width).toBe(64);
   });
 });
+
+describe('絞り込みの解除', () => {
+  it('絞り込みだけを解除し、チームや表示の条件は残す', () => {
+    const c = { ...DEFAULT_CONDITIONS, teams: ['t1'], group: 'assignee' as const, zoom: 'week' as const, assignees: ['me'], flags: ['overdue' as const], q: '設計', milestones: true };
+    const cleared = clearFilters(c);
+
+    expect(hasFilters(c)).toBe(true);
+    expect(hasFilters(cleared)).toBe(false);
+    expect(cleared.teams).toEqual(['t1']);
+    expect(cleared.group).toBe('assignee');
+    expect(cleared.zoom).toBe('week');
+  });
+});
+

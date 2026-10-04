@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { useGantt, useGanttSearch, useMe } from '../../api/hooks';
 import type { GanttTask } from '../../api/types';
-import { Button, ErrorBox, FlagBadges, Loading, StatusBadge } from '../../components/ui';
+import { Button, EmptyState, ErrorBox, FlagBadges, Loading, PageHeader, PriorityBadge, ProgressBar, StatusBadge } from '../../components/ui';
 import { readCurrentTeamId, useTaskPanel } from '../../layout/context';
 import { formatDate, presetRange, toDay, todayIso } from '../../lib/dates';
 import { formatHours, formatSignedHours } from '../../lib/effort';
@@ -91,22 +91,26 @@ export function TaskListPage() {
   return (
     <div>
       <GanttToolbar
+        variant="list"
         conditions={conditions}
         data={data}
         teamOptions={(me?.teams ?? []).map((t) => ({ value: t.id, label: t.name }))}
-        onChange={(next) => setParams(toSearchParams(next, { task: params.get('task') }), { replace: true })}
+        onChange={(next) => setParams(toSearchParams(next, { task: params.get('task') }), { replace: true, flushSync: true })}
         onToday={() => undefined}
         viewMenu={<ViewMenu conditions={conditions} onApply={(c) => setParams(toSearchParams(c))} />}
       />
       <div className="page">
-        <div className="page-header">
-          <h1>タスク一覧</h1>
-          <span className="muted">{tasks.length}件</span>
-        </div>
+        <PageHeader
+          icon="list"
+          title="タスク一覧"
+          description="ガントと同じ条件で絞り込んだタスクを表で確かめます。列の見出しを押すと並べ替えます。"
+          meta={`${tasks.length} 件`}
+        />
         {gantt.isLoading && <Loading />}
         {gantt.error && <ErrorBox error={gantt.error} />}
-        {data && (
-          <div className="scroll-x">
+        {data && tasks.length === 0 && <EmptyState icon="filter" title="条件に合うタスクはありません" description="上の条件を変えるか、表示期間を広げてください。" />}
+        {data && tasks.length > 0 && (
+          <div className="table-wrap">
             <table className="data-table">
               <thead>
                 <tr>
@@ -130,21 +134,29 @@ export function TaskListPage() {
                         {t.isMilestone && '◆ '}
                         {t.title}
                       </Button>
-                      <div className="row">
-                        <FlagBadges flags={t.flags} short />
-                      </div>
+                      {t.flags.length > 0 && (
+                        <div className="row">
+                          <FlagBadges flags={t.flags} short />
+                        </div>
+                      )}
                     </td>
                     <td>{t.assigneeId ? memberName.get(t.assigneeId) : t.isSummary ? '' : '未割り当て'}</td>
                     <td>
                       <StatusBadge status={t.status} />
                     </td>
-                    <td>{PRIORITY[t.priority].label}</td>
+                    <td>
+                      <PriorityBadge priority={t.priority} />
+                    </td>
                     <td className="nowrap">{formatDate(t.plannedStart)}</td>
                     <td className="nowrap">{formatDate(t.plannedEnd)}</td>
-                    <td className="num">{t.progress}%</td>
+                    <td className="num nowrap">
+                      {t.progress}% <ProgressBar value={t.progress} />
+                    </td>
                     <td className="num">{formatHours(t.plannedMinutes, '-')}</td>
                     <td className="num">{formatHours(t.actualMinutes)}</td>
-                    <td className="num">{t.plannedMinutes === null ? '-' : formatSignedHours(t.actualMinutes - t.plannedMinutes)}</td>
+                    <td className={['num', t.plannedMinutes !== null && t.actualMinutes > t.plannedMinutes && 'danger-text'].filter(Boolean).join(' ')}>
+                      {t.plannedMinutes === null ? '-' : formatSignedHours(t.actualMinutes - t.plannedMinutes)}
+                    </td>
                   </tr>
                 ))}
               </tbody>

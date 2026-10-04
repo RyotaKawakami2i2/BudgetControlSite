@@ -17,7 +17,7 @@ import { ApiError } from '../api/client';
 import type { DelayFlag, Priority, Tag, TaskStatus } from '../api/types';
 import { FLAG, PRIORITY, STATUS, tagColorVar } from '../lib/labels';
 import { fieldMessage, messageText } from '../lib/messages';
-import { Icon } from './Icon';
+import { Icon, type IconName } from './Icon';
 import styles from './ui.module.css';
 
 export { styles as ui };
@@ -25,8 +25,11 @@ export { styles as ui };
 // ---------------------------------------------------------------- ボタン
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  /** link は表の中のタスク名など、文字のリンクのように見せるボタン */
-  variant?: 'default' | 'primary' | 'danger' | 'ghost' | 'link';
+  /**
+   * link は表の中のタスク名など、文字のリンクのように見せるボタン。
+   * dangerGhost は削除などの取り消せない操作を、目立たせすぎずに置くときに使う（押すと確認のダイアログを出す）。
+   */
+  variant?: 'default' | 'primary' | 'danger' | 'dangerGhost' | 'ghost' | 'link';
   size?: 'normal' | 'small';
   pressed?: boolean;
   iconOnly?: boolean;
@@ -37,6 +40,7 @@ export function Button({ variant = 'default', size = 'normal', pressed, iconOnly
     variant === 'link' ? styles.link : styles.button,
     variant === 'primary' && styles.primary,
     variant === 'danger' && styles.danger,
+    variant === 'dangerGhost' && styles.dangerGhost,
     variant === 'ghost' && styles.ghost,
     size === 'small' && styles.small,
     pressed && styles.pressed,
@@ -53,12 +57,15 @@ export function Button({ variant = 'default', size = 'normal', pressed, iconOnly
 export function Dialog({
   open,
   title,
+  description,
   onClose,
   children,
   footer,
 }: {
   open: boolean;
   title: string;
+  /** 見出しの下に出す短い説明（このダイアログで何をするか） */
+  description?: ReactNode;
   onClose: () => void;
   children: ReactNode;
   footer?: ReactNode;
@@ -85,7 +92,10 @@ export function Dialog({
       {open && (
         <>
           <div className={styles.dialogHeader}>
-            <h2 id={titleId}>{title}</h2>
+            <div className={styles.dialogTitle}>
+              <h2 id={titleId}>{title}</h2>
+              {description && <p className={styles.dialogDescription}>{description}</p>}
+            </div>
             <Button variant="ghost" iconOnly aria-label="閉じる" onClick={onClose}>
               <Icon name="close" />
             </Button>
@@ -172,7 +182,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             role={t.kind === 'error' ? 'alert' : 'status'}
             className={[styles.toast, t.kind === 'success' ? styles.toastSuccess : t.kind === 'error' ? styles.toastError : styles.toastInfo].join(' ')}
           >
-            <span aria-hidden="true">{t.kind === 'success' ? '✓' : t.kind === 'error' ? '！' : 'ℹ'}</span>
+            <span className={styles.toastIcon}>
+              <Icon name={t.kind === 'success' ? 'checkCircle' : t.kind === 'error' ? 'alert' : 'info'} size={20} />
+            </span>
             <p>{t.text}</p>
             <Button variant="ghost" size="small" aria-label="閉じる" onClick={() => dismiss(t.id)}>
               <Icon name="close" size={14} />
@@ -254,7 +266,7 @@ export function Field({
     <div className={styles.field}>
       <label className={styles.fieldLabel} htmlFor={htmlFor}>
         {label}
-        {required && <span className={styles.required}>（必須）</span>}
+        {required && <span className={styles.required}>必須</span>}
       </label>
       {children}
       {hint && <span className={styles.fieldHint}>{hint}</span>}
@@ -269,21 +281,37 @@ export function Field({
 
 // ---------------------------------------------------------------- 印
 
+const STATUS_CLASS: Record<TaskStatus, string | undefined> = {
+  not_started: styles.statusNotStarted,
+  in_progress: styles.statusInProgress,
+  on_hold: styles.statusOnHold,
+  done: styles.statusDone,
+  cancelled: styles.statusCancelled,
+};
+
+/** 状態の印。色だけで示さず、アイコンと文字を添える（基本設計書 4.4）。 */
 export function StatusBadge({ status }: { status: TaskStatus }) {
   const s = STATUS[status];
   return (
-    <span className={styles.badge} style={{ color: s.color }}>
+    <span className={[styles.badge, STATUS_CLASS[status]].join(' ')}>
       <span aria-hidden="true">{s.icon}</span>
       {s.label}
     </span>
   );
 }
 
-export function PriorityBadge({ priority }: { priority: Priority }) {
+const PRIORITY_CLASS: Record<Priority, string | undefined> = {
+  high: styles.priorityHigh,
+  medium: styles.priorityMedium,
+  low: styles.priorityLow,
+};
+
+/** 優先度の印。withLabel を付けると「優先度 高」と表示する（列の見出しがない場所で使う）。 */
+export function PriorityBadge({ priority, withLabel }: { priority: Priority; withLabel?: boolean }) {
   const p = PRIORITY[priority];
   return (
-    <span className={styles.badge} style={{ color: p.color }} title={`優先度 ${p.label}`}>
-      {p.label}
+    <span className={[styles.badge, PRIORITY_CLASS[priority]].join(' ')} title={`優先度 ${p.label}`}>
+      {withLabel ? `優先度 ${p.label}` : p.label}
     </span>
   );
 }
@@ -302,6 +330,16 @@ export function FlagBadges({ flags, short }: { flags: DelayFlag[]; short?: boole
   );
 }
 
+/** 汎用の小さな印（役割、利用者の状態など）。 */
+export function Pill({ tone = 'neutral', icon, children, title }: { tone?: 'neutral' | 'primary' | 'success' | 'warning' | 'danger'; icon?: IconName; children: ReactNode; title?: string }) {
+  return (
+    <span className={[styles.pill, styles[`pill_${tone}`]].join(' ')} title={title}>
+      {icon && <Icon name={icon} size={14} />}
+      {children}
+    </span>
+  );
+}
+
 export function TagChip({ tag }: { tag: Tag }) {
   const c = tagColorVar(tag.color);
   return (
@@ -311,23 +349,129 @@ export function TagChip({ tag }: { tag: Tag }) {
   );
 }
 
-export function ProgressBar({ value }: { value: number }) {
+export function ProgressBar({ value, wide, tone = 'primary', label = '進捗' }: { value: number; wide?: boolean; tone?: 'primary' | 'success' | 'danger'; label?: string }) {
   return (
-    <span className={styles.progressBar} role="img" aria-label={`進捗 ${value}%`}>
-      <span className={styles.progressFill} style={{ width: `${Math.min(100, Math.max(0, value))}%` }} />
+    <span className={[styles.progressBar, wide && styles.progressWide].filter(Boolean).join(' ')} role="img" aria-label={`${label} ${value}%`}>
+      <span
+        className={[styles.progressFill, tone === 'success' && styles.progressSuccess, tone === 'danger' && styles.progressDanger].filter(Boolean).join(' ')}
+        style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
+      />
     </span>
   );
 }
 
 export function Loading() {
-  return <p className={styles.spinner}>読み込んでいます…</p>;
+  return (
+    <p className={styles.spinner} role="status">
+      <span className={styles.spinnerIcon} aria-hidden="true" />
+      読み込んでいます…
+    </p>
+  );
 }
 
 export function ErrorBox({ error }: { error: unknown }) {
   return (
     <div className={styles.errorBox} role="alert">
-      {describeError(error)}
+      <Icon name="alert" size={18} />
+      <span>{describeError(error)}</span>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------- 画面の見出し、カード、空の表示、利用者の印
+
+/** 画面の見出し。何をする画面かを 1 行で説明し、主な操作を右に置く。 */
+export function PageHeader({ title, description, icon, actions, meta }: { title: ReactNode; description?: ReactNode; icon?: IconName; actions?: ReactNode; meta?: ReactNode }) {
+  return (
+    <header className={styles.pageHeader}>
+      {icon && (
+        <span className={styles.pageIcon} aria-hidden="true">
+          <Icon name={icon} size={22} />
+        </span>
+      )}
+      <div className={styles.pageTitle}>
+        <h1>{title}</h1>
+        {description && <p className={styles.pageDescription}>{description}</p>}
+      </div>
+      {meta && <div className={styles.pageMeta}>{meta}</div>}
+      {actions && <div className={styles.pageActions}>{actions}</div>}
+    </header>
+  );
+}
+
+/** 内容のまとまり。見出し、件数、説明、右上の操作を持てる。 */
+export function Card({
+  title,
+  count,
+  description,
+  actions,
+  icon,
+  tone,
+  children,
+  className,
+  id,
+}: {
+  title?: ReactNode;
+  count?: number;
+  description?: ReactNode;
+  actions?: ReactNode;
+  icon?: IconName;
+  tone?: 'danger' | 'warning' | 'primary';
+  children?: ReactNode;
+  className?: string;
+  id?: string;
+}) {
+  return (
+    <section className={['card', styles.cardTone, tone && styles[`card_${tone}`], className].filter(Boolean).join(' ')} id={id}>
+      {(title || actions) && (
+        <div className={styles.cardHeader}>
+          {icon && (
+            <span className={styles.cardIcon} aria-hidden="true">
+              <Icon name={icon} size={18} />
+            </span>
+          )}
+          {title && (
+            <h2 className={styles.cardTitle}>
+              {title}
+              {count !== undefined && <span className={styles.cardCount}>{count}</span>}
+            </h2>
+          )}
+          {actions && <div className={styles.cardActions}>{actions}</div>}
+        </div>
+      )}
+      {description && <p className={styles.cardDescription}>{description}</p>}
+      {children}
+    </section>
+  );
+}
+
+/** データがないときの表示。理由と、次にできることを示す。 */
+export function EmptyState({ icon = 'inbox', title, description, action, compact }: { icon?: IconName; title: string; description?: ReactNode; action?: ReactNode; compact?: boolean }) {
+  return (
+    <div className={[styles.emptyState, compact && styles.emptyCompact].filter(Boolean).join(' ')}>
+      <span className={styles.emptyIcon} aria-hidden="true">
+        <Icon name={icon} size={compact ? 18 : 24} />
+      </span>
+      <div>
+        <p className={styles.emptyTitle}>{title}</p>
+        {description && <p className={styles.emptyDescription}>{description}</p>}
+        {action && <div className={styles.emptyAction}>{action}</div>}
+      </div>
+    </div>
+  );
+}
+
+const AVATAR_COLORS = ['blue', 'green', 'purple', 'orange', 'teal', 'red', 'yellow', 'gray'] as const;
+
+/** 利用者の頭文字の丸印（名前から色を決める。写真は扱わない）。 */
+export function Avatar({ name, size = 'normal' }: { name: string; size?: 'small' | 'normal' }) {
+  let hash = 0;
+  for (const ch of name) hash = (hash * 31 + ch.codePointAt(0)!) >>> 0;
+  const color = tagColorVar(AVATAR_COLORS[hash % AVATAR_COLORS.length]!);
+  return (
+    <span className={[styles.avatar, size === 'small' && styles.avatarSmall].filter(Boolean).join(' ')} style={{ background: color.bg, color: color.fg }} aria-hidden="true">
+      {[...name.trim()][0] ?? '?'}
+    </span>
   );
 }
 
@@ -388,6 +532,45 @@ export function MultiSelect<T extends string>({
               選択を解除
             </Button>
           )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- ポップオーバー（ボタンで開く小さな設定の欄）
+
+export function Popover({ label, icon, badge, children }: { label: string; icon?: IconName; badge?: number; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const panelId = useId();
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', close);
+    document.addEventListener('keydown', escape);
+    return () => {
+      document.removeEventListener('mousedown', close);
+      document.removeEventListener('keydown', escape);
+    };
+  }, [open]);
+
+  return (
+    <div className={styles.multi} ref={ref}>
+      <Button size="small" aria-expanded={open} aria-controls={panelId} onClick={() => setOpen((o) => !o)} pressed={(badge ?? 0) > 0}>
+        {icon && <Icon name={icon} size={14} />}
+        {label}
+        {(badge ?? 0) > 0 && <span className={styles.count}>{badge}</span>}
+        <Icon name="chevronDown" size={14} />
+      </Button>
+      {open && (
+        <div className={[styles.multiPanel, styles.popoverPanel].join(' ')} id={panelId} role="group" aria-label={label}>
+          {children}
         </div>
       )}
     </div>

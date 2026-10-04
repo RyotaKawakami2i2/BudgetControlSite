@@ -4,6 +4,7 @@
   min-height: 100%;
 }
 
+/* ---------------------------------------------------------------- 見出し（スクロールしても上に残す） */
 .header {
   padding: var(--space-3) var(--space-4) 0;
   border-bottom: 1px solid var(--color-border);
@@ -11,6 +12,15 @@
   top: 0;
   background: var(--color-bg);
   z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.path {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  margin: 0;
 }
 
 .titleRow {
@@ -21,54 +31,108 @@
 
 .titleRow h2 {
   flex: 1;
-  font-size: var(--font-size-large);
-  margin: 0;
+  font-size: 18px;
+  margin: 2px 0 0;
   overflow-wrap: anywhere;
 }
 
-.path {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-small);
-  margin: var(--space-1) 0 var(--space-2);
+.headerMarks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
 }
 
+.actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  padding: var(--space-1) 0;
+}
+
+/* ---------------------------------------------------------------- 本文 */
 .body {
   padding: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-5);
 }
 
 .readonlyNote {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
   border-radius: var(--radius);
   padding: var(--space-2) var(--space-3);
+  margin: 0;
 }
 
-.inline {
+.section h3 {
+  margin-bottom: var(--space-2);
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+  letter-spacing: 0.02em;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-4);
+}
+
+.fieldItem {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-4);
-  align-items: center;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
 }
 
-.inline label {
+.fieldItem select {
+  width: 100%;
+}
+
+.fieldLabel {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  font-weight: 600;
+}
+
+.progressEdit {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.progressEdit select {
+  width: auto;
+}
+
+.assignee {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: 6px;
+  min-height: 32px;
 }
 
 .planTable {
   width: 100%;
   border-collapse: collapse;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
 }
 
 .planTable th,
 .planTable td {
-  padding: var(--space-1) var(--space-2);
+  padding: 6px var(--space-3);
   border-bottom: 1px solid var(--color-border);
   text-align: left;
+}
+
+.planTable thead th {
+  background: var(--color-surface);
+  font-size: var(--font-size-small);
 }
 
 .planTable th {
@@ -77,14 +141,70 @@
   white-space: nowrap;
 }
 
-.section h3 {
-  margin-bottom: var(--space-2);
+.planTable tbody tr:last-child th,
+.planTable tbody tr:last-child td {
+  border-bottom: none;
 }
 
-.actions {
+.kpis {
   display: flex;
   gap: var(--space-2);
+  margin-top: var(--space-2);
   flex-wrap: wrap;
+}
+
+.kpi {
+  display: inline-flex;
+  flex-direction: column;
+  padding: 6px var(--space-3);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  min-width: 120px;
+}
+
+.kpi span {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
+.kpi strong {
+  font-size: var(--font-size-large);
+  font-variant-numeric: tabular-nums;
+}
+
+.kpiDanger {
+  background: var(--color-danger-soft);
+}
+
+.kpiDanger strong {
+  color: var(--color-danger-strong);
+}
+
+.chips {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+  margin-top: var(--space-2);
+}
+
+.warning {
+  color: var(--color-warning-strong);
+  font-size: var(--font-size-small);
+  font-weight: 600;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.footer .meta {
+  margin: 0;
 }
 
 .listItem {
@@ -97,16 +217,126 @@
   font-size: var(--font-size-small);
 }
 
-.chips {
+/* ---------------------------------------------------------------- 作業実績 */
+.totals {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
-  gap: var(--space-1);
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
-.warning {
-  color: var(--color-warning);
+.totals li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
+.totalName {
+  flex: 1;
+  min-width: 0;
+}
+
+.totals strong {
+  min-width: 56px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------- コメント */
+.comment {
+  display: flex;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.commentBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.commentBody p {
+  margin-bottom: var(--space-1);
+}
+
+.commentMeta {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+}
+
+.commentMeta strong {
+  color: var(--color-text);
+  font-size: var(--font-size);
+}
+
+.commentForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* ---------------------------------------------------------------- 履歴 */
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 var(--space-4);
+  border-left: 2px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.timeline li {
+  position: relative;
+}
+
+.timeline li::before {
+  content: "";
+  position: absolute;
+  left: calc(var(--space-4) * -1 - 6px);
+  top: 6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-bg);
+  border: 2px solid var(--color-primary);
+}
+
+.timeline p {
+  margin: 0;
+}
+
+.timelineMeta {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+}
+
+.timelineMeta strong {
+  color: var(--color-text);
+}
+
+.timelineText {
+  font-weight: 600;
+}
+
+.timelineChange {
+  color: var(--color-text);
+}
+
+.oldValue {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+}
+
+/* ---------------------------------------------------------------- 登録・編集のダイアログ */
 .form {
   display: flex;
   flex-direction: column;
@@ -118,4 +348,40 @@
 .form select,
 .form textarea {
   width: 100%;
+}
+
+.formSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.formSection:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.formSectionTitle {
+  margin: 0;
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+  letter-spacing: 0.02em;
+}
+
+.taskBadge {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  font-weight: 600;
+}
+
+@media (max-width: 480px) {
+  .fields {
+    grid-template-columns: 1fr;
+  }
 }
