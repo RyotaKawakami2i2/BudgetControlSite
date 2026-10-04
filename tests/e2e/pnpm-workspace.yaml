@@ -1,0 +1,3 @@
+# pnpm 12 の設定（詳細設計書 12.6。web/ と同じ）
+minimumReleaseAge: 10080   # 公開から 7 日（分で指定）たっていない版は入れない
+allowBuilds: {}            # インストール時スクリプトは許さない（ブラウザは playwright install で別に入れる）

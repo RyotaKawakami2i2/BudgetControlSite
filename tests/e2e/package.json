@@ -1,0 +1,25 @@
+{
+  "name": "taskyojitsu-e2e",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "タスク予実管理システムの通しのテスト（Playwright。詳細設計書 13.2）",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "12.7.0",
+      "onFail": "error"
+    },
+    "runtime": {
+      "name": "node",
+      "version": ">=24",
+      "onFail": "error"
+    }
+  },
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}

@@ -1,0 +1,104 @@
+@page "/account/login-recovery"
+@attribute [AllowAnonymous]
+
+@using TaskYojitsu.Application.Accounts
+@using TaskYojitsu.Application.Common
+
+@inject UserManager<User> UserManager
+@inject AppSignInManager SignInManager
+@inject LoginEvents LoginEvents
+@inject AuthRateLimiter RateLimiter
+@inject Mailer Mailer
+@inject BusinessClock Clock
+@inject IdentityRedirectManager RedirectManager
+
+<PageTitle>リカバリーコードでログイン - タスク予実管理</PageTitle>
+
+<div class="auth-card">
+    <h1>リカバリーコードでログイン</h1>
+    <StatusMessage Message="@message" />
+    <p>認証アプリを登録したときに表示されたリカバリーコード（例: 7K2M-Q9XD-4HTP）を入力してください。1 つのコードは 1 回だけ使えます。</p>
+    <EditForm Model="Input" FormName="login-recovery" OnSubmit="OnSubmitAsync" method="post" class="form">
+        <div class="field">
+            <label for="recovery">リカバリーコード</label>
+            <InputText @bind-Value="Input.Code" id="recovery" autocomplete="off" maxlength="20" required />
+        </div>
+        <div class="actions">
+            <button type="submit" class="btn btn-primary">ログイン</button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    private string? message;
+    private User? user;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = default!;
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Input ??= new();
+        user = await SignInManager.GetTwoFactorAuthenticationUserAsync();
+        if (user is null)
+        {
+            RedirectManager.RedirectTo("/account/login");
+        }
+    }
+
+    private async Task OnSubmitAsync()
+    {
+        if (user is null)
+        {
+            return;
+        }
+
+        if (!await RateLimiter.TryAcquireAsync(AuthLimit.SecondFactorByIp, ClientIp.Of(HttpContext)?.ToString() ?? "unknown"))
+        {
+            message = "エラー: " + AuthTexts.TooMany;
+            return;
+        }
+
+        if (await UserManager.IsLockedOutAsync(user))
+        {
+            RedirectManager.RedirectTo("/account/lockout");
+            return;
+        }
+
+        SignInManager.PendingMethod = AuthMethod.PasswordRecovery;
+        var result = await SignInManager.TwoFactorRecoveryCodeSignInAsync((Input.Code ?? "").Trim());
+        if (result.Succeeded)
+        {
+            await LoginEvents.OnSucceededAsync(HttpContext, user, AuthMethod.PasswordRecovery);
+            var remaining = await UserManager.CountRecoveryCodesAsync(user);
+            await Mailer.SendAsync(user.Email, EmailTemplates.RecoveryCodeUsed(Clock.ToLocal(Clock.UtcNow), remaining));
+
+            // 残りが 3 個以下なら、再発行を促す画面へ
+            RedirectManager.RedirectTo(remaining <= 3 ? "/account/manage/two-factor" : IdentityRedirectManager.SafeReturnUrl(ReturnUrl));
+            return;
+        }
+
+        // 認証コードの失敗としてロックの回数に数える
+        await UserManager.AccessFailedAsync(user);
+        await LoginEvents.OnFailedAsync(user.Email, user.Id, "recovery_code");
+        if (await UserManager.IsLockedOutAsync(user))
+        {
+            await LoginEvents.OnLockedAsync(user);
+            RedirectManager.RedirectTo("/account/lockout");
+            return;
+        }
+
+        message = "エラー: " + AuthTexts.InvalidLogin;
+    }
+
+    private sealed class InputModel
+    {
+        public string? Code { get; set; }
+    }
+}

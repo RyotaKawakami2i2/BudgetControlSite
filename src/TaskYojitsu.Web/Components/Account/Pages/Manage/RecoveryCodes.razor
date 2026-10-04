@@ -1,0 +1,52 @@
+@page "/account/manage/recovery-codes"
+
+@using TaskYojitsu.Application.Abstractions
+
+@inject IAuditWriter Audit
+@inject TaskYojitsu.Application.Accounts.Mailer Mailer
+@inject TaskYojitsu.Application.Common.BusinessClock Clock
+
+<PageTitle>リカバリーコードの再発行 - タスク予実管理</PageTitle>
+
+@if (recoveryCodes is not null)
+{
+    <div class="alert alert-success" role="status">新しいリカバリーコードを発行しました。古いコードは使えなくなりました。</div>
+    <ShowRecoveryCodes RecoveryCodes="recoveryCodes" />
+}
+else
+{
+    <h2>リカバリーコードの再発行</h2>
+    <p>新しいリカバリーコードを 10 個発行します。古いコードはすべて使えなくなります。</p>
+    <form @formname="regenerate-codes" @onsubmit="OnSubmitAsync" method="post" class="form">
+        <AntiforgeryToken />
+        <div class="actions">
+            <button type="submit" class="btn btn-primary">再発行する</button>
+            <a class="btn btn-link" href="/account/manage/two-factor">取り消す</a>
+        </div>
+    </form>
+}
+
+@code {
+    private string[]? recoveryCodes;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (await LoadAsync(requireReauth: true) && !CurrentUser!.TwoFactorEnabled)
+        {
+            RedirectManager.RedirectTo("/account/manage/two-factor");
+        }
+    }
+
+    private async Task OnSubmitAsync()
+    {
+        if (CurrentUser is null || !CurrentUser.TwoFactorEnabled || !Reauth.IsRecent(HttpContext))
+        {
+            return;
+        }
+
+        recoveryCodes = [.. await UserManager.GenerateNewTwoFactorRecoveryCodesAsync(CurrentUser, 10) ?? []];
+        await Audit.WriteNowAsync(new AuditEntry("auth.recovery_codes.regenerated", TargetType: "user", TargetId: CurrentUser.Id.ToString()));
+        await Mailer.SendAsync(CurrentUser.Email,
+            TaskYojitsu.Application.Accounts.EmailTemplates.LoginSettingsChanged(Clock.ToLocal(Clock.UtcNow), "リカバリーコードを再発行しました"));
+    }
+}

@@ -1,0 +1,20 @@
+@page "/error"
+@attribute [AllowAnonymous]
+
+<PageTitle>エラー - タスク予実管理</PageTitle>
+
+@* 内部の情報（例外の内容など）は出さない（NF-LOG-07）。問い合わせ番号だけを出す *@
+<div class="auth-card">
+    <h1>エラーが発生しました</h1>
+    <p>時間をおいてやり直してください。続く場合は、問い合わせ番号を管理者に伝えてください。</p>
+    @if (!string.IsNullOrEmpty(Id))
+    {
+        <p>問い合わせ番号: <code>@Id</code></p>
+    }
+    <p><a href="/app">ホームへ戻る</a></p>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private string? Id { get; set; }
+}

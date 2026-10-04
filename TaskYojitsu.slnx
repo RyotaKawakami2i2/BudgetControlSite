@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TaskYojitsu.Application/TaskYojitsu.Application.csproj" />
+    <Project Path="src/TaskYojitsu.Domain/TaskYojitsu.Domain.csproj" />
+    <Project Path="src/TaskYojitsu.Infrastructure/TaskYojitsu.Infrastructure.csproj" />
+    <Project Path="src/TaskYojitsu.Tool/TaskYojitsu.Tool.csproj" />
+    <Project Path="src/TaskYojitsu.Web/TaskYojitsu.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TaskYojitsu.Application.Tests/TaskYojitsu.Application.Tests.csproj" />
+    <Project Path="tests/TaskYojitsu.Domain.Tests/TaskYojitsu.Domain.Tests.csproj" />
+    <Project Path="tests/TaskYojitsu.Web.Tests/TaskYojitsu.Web.Tests.csproj" />
+  </Folder>
+</Solution>

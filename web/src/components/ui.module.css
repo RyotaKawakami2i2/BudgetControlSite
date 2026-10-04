@@ -1,0 +1,350 @@
+/* 共通の部品のスタイル（基本設計書 4.4）。色と余白は tokens.css の変数だけを使う */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-height: 32px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border-input);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  color: var(--color-text);
+  cursor: pointer;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.button:hover:not(:disabled) {
+  background: var(--color-surface);
+}
+
+.button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #ffffff;
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+.danger {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  color: #ffffff;
+}
+
+.danger:hover:not(:disabled) {
+  background: var(--color-danger-hover);
+}
+
+.ghost {
+  border-color: transparent;
+  background: transparent;
+  font-weight: 400;
+}
+
+.ghost:hover:not(:disabled) {
+  background: var(--color-surface-strong);
+}
+
+.small {
+  min-height: 26px;
+  padding: 0 var(--space-2);
+  font-size: var(--font-size-small);
+}
+
+.iconOnly {
+  padding: 0;
+  width: 32px;
+}
+
+/* 文字のリンクのように見せるボタン（表の中のタスク名など） */
+.link {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-primary);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.link:hover {
+  color: var(--color-primary-hover);
+  text-decoration: underline;
+}
+
+.pressed {
+  background: var(--color-primary-soft);
+  border-color: var(--color-primary);
+  color: #0550ae;
+}
+
+/* ダイアログ（HTML 標準の dialog 要素） */
+.dialog {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 0;
+  max-width: min(640px, calc(100vw - 32px));
+  width: 100%;
+  box-shadow: var(--shadow);
+  color: var(--color-text);
+}
+
+.dialog::backdrop {
+  background: rgb(31 35 40 / 45%);
+}
+
+.dialogHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.dialogHeader h2 {
+  margin: 0;
+}
+
+.dialogBody {
+  padding: var(--space-4);
+  max-height: 70vh;
+  overflow: auto;
+}
+
+.dialogFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+/* お知らせ（画面上部） */
+.toasts {
+  position: fixed;
+  top: calc(var(--topbar-height) + var(--space-2));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: min(560px, calc(100vw - 32px));
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  border: 1px solid;
+  box-shadow: var(--shadow);
+  background: var(--color-bg);
+}
+
+.toast p {
+  flex: 1;
+  margin: 0;
+}
+
+.toastSuccess {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.toastError {
+  border-color: var(--color-danger);
+  background: var(--color-danger-soft);
+}
+
+.toastInfo {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+/* 印 */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 var(--space-2);
+  border-radius: 999px;
+  font-size: var(--font-size-small);
+  line-height: 20px;
+  border: 1px solid currentColor;
+  white-space: nowrap;
+  background: var(--color-bg);
+}
+
+.flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius);
+  font-size: var(--font-size-small);
+  line-height: 20px;
+  color: #ffffff;
+  background: var(--color-danger);
+  white-space: nowrap;
+}
+
+.tag {
+  display: inline-block;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius);
+  font-size: var(--font-size-small);
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+/* 入力欄 */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.fieldLabel {
+  font-weight: 600;
+}
+
+.required {
+  color: var(--color-danger);
+  margin-left: var(--space-1);
+  font-weight: 400;
+}
+
+.fieldHint {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
+.fieldError {
+  color: var(--color-danger);
+  font-size: var(--font-size-small);
+}
+
+.invalid {
+  border-color: var(--color-danger) !important;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+/* 複数選択 */
+.multi {
+  position: relative;
+  display: inline-block;
+}
+
+.multiPanel {
+  position: absolute;
+  z-index: 50;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 220px;
+  max-height: 320px;
+  overflow: auto;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: var(--space-2);
+}
+
+.multiOption {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.multiOption:hover {
+  background: var(--color-surface);
+}
+
+.count {
+  display: inline-block;
+  min-width: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: #ffffff;
+  font-size: var(--font-size-small);
+  line-height: 18px;
+  text-align: center;
+}
+
+/* タブ */
+.tabs {
+  display: flex;
+  gap: var(--space-1);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tab {
+  border: none;
+  background: transparent;
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.tabActive {
+  color: var(--color-text);
+  border-bottom-color: var(--color-primary);
+}
+
+.progressBar {
+  display: inline-block;
+  width: 64px;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--color-surface-strong);
+  overflow: hidden;
+  vertical-align: middle;
+}
+
+.progressFill {
+  display: block;
+  height: 100%;
+  background: var(--color-primary);
+}
+
+.spinner {
+  color: var(--color-text-muted);
+  padding: var(--space-4);
+}
+
+.errorBox {
+  border: 1px solid var(--color-danger);
+  background: var(--color-danger-soft);
+  border-radius: var(--radius);
+  padding: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-3);
+}

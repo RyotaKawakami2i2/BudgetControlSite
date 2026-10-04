@@ -5,7 +5,7 @@
 | 版 | 1.2 案（2026-10-03 更新） |
 | 状態 | レビュー待ち |
 | 入力となる文書 | [要件定義書 1.4 案](requirements_v2.md)、[基本設計書 1.2 案](basic_design_v2.md) |
-| 置き換える文書 | 旧 [detail_design.md](detail_design.md)（試作品の詳細設計書。本書の確定後は参照しない） |
+| 置き換える文書 | 旧 detail_design.md（試作品の詳細設計書。削除した。git の履歴に残る） |
 
 改訂履歴
 
@@ -59,7 +59,7 @@ BudgetControlSite/
 └─ docs/
 ```
 
-現行の TaskManagementApp/ は、新システムのリリース後に削除する（git の履歴には残る）。
+旧試作品の TaskManagementApp/ は削除した（git の履歴には残る）。
 
 ### 2.2 主な部品
 

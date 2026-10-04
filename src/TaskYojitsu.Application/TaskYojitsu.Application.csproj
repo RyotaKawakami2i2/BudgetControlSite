@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>TaskYojitsu.Application</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TaskYojitsu.Domain\TaskYojitsu.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- DB へのアクセスは IAppDbContext（DbSet と LINQ）を通す。実装は Infrastructure に置く -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TaskYojitsu.Application.Tests" />
+    <InternalsVisibleTo Include="TaskYojitsu.Web.Tests" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,25 @@
+# イメージのビルド（deploy/Dockerfile）に送らないもの
+.git/
+.github/
+.devcontainer/
+.vs/
+.vscode/
+.idea/
+.claude/
+.cursor/
+.pnpm-store/
+**/bin/
+**/obj/
+**/node_modules/
+src/TaskYojitsu.Web/wwwroot/app/
+tests/
+docs/
+deploy/
+scripts/
+*.md
+.env
+.env.*
+**/*.pfx
+**/*.pem
+**/*.key
+**/secrets/

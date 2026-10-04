@@ -1,0 +1,22 @@
+<div class="auth-section">
+    <h2>リカバリーコード</h2>
+    <div class="alert alert-warning" role="alert">
+        <p><strong>このコードは今回だけ表示します。安全な場所に保管してください。</strong></p>
+        <p>認証アプリを失くしたときに、1 つのコードで 1 回だけログインできます。</p>
+    </div>
+    <ul class="recovery-codes">
+        @foreach (var item in RecoveryCodes)
+        {
+            <li><code>@item</code></li>
+        }
+    </ul>
+    <p><a class="btn btn-primary" href="@ContinueUrl">続ける</a></p>
+</div>
+
+@code {
+    [Parameter]
+    public string[] RecoveryCodes { get; set; } = [];
+
+    [Parameter]
+    public string ContinueUrl { get; set; } = "/account/manage/two-factor";
+}

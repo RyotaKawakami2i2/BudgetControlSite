@@ -1,0 +1,30 @@
+@page "/account/setup-mfa"
+@attribute [Authorize]
+
+<PageTitle>多要素認証の設定 - タスク予実管理</PageTitle>
+
+<div class="auth-card">
+    <h1>多要素認証の設定</h1>
+    @if (Required == "1")
+    {
+        <div class="alert alert-error" role="alert">管理者は、多要素認証の設定が必要です。認証アプリかパスキーを設定してください。</div>
+    }
+    else
+    {
+        <div class="alert alert-info" role="status">@AuthTexts.MfaRecommended</div>
+    }
+    <p>多要素認証を設定すると、パスワードが漏れても、ほかの人はログインできません。設定は後からでも、アカウント設定から行えます。</p>
+    <div class="choice-list">
+        <a class="btn btn-primary" href="/account/manage/authenticator">認証アプリを設定する</a>
+        <a class="btn btn-secondary" href="/account/manage/passkeys">パスキーを登録する</a>
+        @if (Required != "1")
+        {
+            <a class="btn btn-link" href="/app">後で設定する</a>
+        }
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private string? Required { get; set; }
+}

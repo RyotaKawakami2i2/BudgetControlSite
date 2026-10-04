@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>TaskYojitsu.Domain</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 利用者のエンティティを Identity のユーザー情報と兼ねるため、IdentityUser の型だけを参照する -->
+    <PackageReference Include="Microsoft.Extensions.Identity.Stores" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TaskYojitsu.Domain.Tests" />
+  </ItemGroup>
+
+</Project>

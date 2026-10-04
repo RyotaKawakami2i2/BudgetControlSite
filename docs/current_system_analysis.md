@@ -6,9 +6,10 @@
 | 版 | 1.0（2026-10-03 初版） |
 | 目的 | 現行アプリの機能・画面・データ構造・課題を整理し、新しい要件定義書を作るための参考資料とする |
 | 調査方法 | ソースコード、設定ファイル、既存ドキュメント（docs/）、画面キャプチャ（pics/）の読解 |
+| 削除について | 調査した試作品（TaskManagementApp/）、画面キャプチャ（pics/）、旧設計書は、新システムの開発に合わせてリポジトリから削除した。本書のリンクは、GitHub 上のコミット 3431f74 を指す |
 | 注意 | 現在の開発環境には .NET SDK が無いため、アプリは実行していない。挙動はコードから判断したもので、「要実機確認」と書いた項目は特に確認が必要 |
 
-既存の [requirements.md](requirements.md)、[basic_design.md](basic_design.md)、[detail_design.md](detail_design.md) は計画段階の文書で、実装と食い違う箇所が多い（10章）。本書は「実際に何が作られ、どう動くか」を記録する。
+既存の [requirements.md](https://github.com/RyotaKawakami2i2/BudgetControlSite/blob/3431f74/docs/requirements.md)、[basic_design.md](https://github.com/RyotaKawakami2i2/BudgetControlSite/blob/3431f74/docs/basic_design.md)、[detail_design.md](https://github.com/RyotaKawakami2i2/BudgetControlSite/blob/3431f74/docs/detail_design.md) は計画段階の文書で、実装と食い違う箇所が多い（10章）。本書は「実際に何が作られ、どう動くか」を記録する。
 
 本書でいう「予実」は、予定（または予算）と実績の比較を指す。
 
@@ -535,15 +536,15 @@ TeamId と UserId の組合せに一意制約はない（重複追加はアプ�
 
 トップページ
 
-![トップページ](../pics/image.png)
+![トップページ](https://github.com/RyotaKawakami2i2/BudgetControlSite/raw/3431f74/pics/image.png)
 
 ログイン
 
-![ログイン画面](../pics/image2.png)
+![ログイン画面](https://github.com/RyotaKawakami2i2/BudgetControlSite/raw/3431f74/pics/image2.png)
 
 ジョブ一覧（ログイン後に最初に表示される画面）
 
-![ジョブ一覧](../pics/image3.png)
+![ジョブ一覧](https://github.com/RyotaKawakami2i2/BudgetControlSite/raw/3431f74/pics/image3.png)
 
 ### 8.2 デザインの特徴
 
@@ -694,7 +695,7 @@ TeamId と UserId の組合せに一意制約はない（重複追加はアプ�
 
 ## 付録A. エンドポイント一覧
 
-アクセス制御は実装上の挙動。すべての POST で CSRF トークンを検証していない。ソース: [AccountController.cs](../TaskManagementApp/Controllers/AccountController.cs)、[HomeController.cs](../TaskManagementApp/Controllers/HomeController.cs)、[JobController.cs](../TaskManagementApp/Controllers/JobController.cs)、[TeamController.cs](../TaskManagementApp/Controllers/TeamController.cs)、[TimeEntryController.cs](../TaskManagementApp/Controllers/TimeEntryController.cs)
+アクセス制御は実装上の挙動。すべての POST で CSRF トークンを検証していない。ソース: [AccountController.cs](https://github.com/RyotaKawakami2i2/BudgetControlSite/blob/3431f74/TaskManagementApp/Controllers/AccountController.cs)、[HomeController.cs](https://github.com/RyotaKawakami2i2/BudgetControlSite/blob/3431f74/TaskManagementApp/Controllers/HomeController.cs)、[JobController.cs](https://github.com/RyotaKawakami2i2/BudgetControlSite/blob/3431f74/TaskManagementApp/Controllers/JobController.cs)、[TeamController.cs](https://github.com/RyotaKawakami2i2/BudgetControlSite/blob/3431f74/TaskManagementApp/Controllers/TeamController.cs)、[TimeEntryController.cs](https://github.com/RyotaKawakami2i2/BudgetControlSite/blob/3431f74/TaskManagementApp/Controllers/TimeEntryController.cs)
 
 | コントローラー | メソッド | パス | アクセス制御 | 備考 |
 | --- | --- | --- | --- | --- |

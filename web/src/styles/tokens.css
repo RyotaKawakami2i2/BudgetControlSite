@@ -1,0 +1,75 @@
+/*
+ * デザインの変数（基本設計書 4.4）。色・余白・文字の大きさは、ここだけで定義して全画面で使う。
+ * コントラスト比は基本設計書の表で確認した値（白の背景に対して 4.5:1 以上）。
+ */
+:root {
+  /* 文字と面 */
+  --color-text: #1f2328;
+  --color-text-muted: #59636e;
+  --color-bg: #ffffff;
+  --color-surface: #f6f8fa;
+  --color-surface-strong: #eaeef2;
+  --color-border: #d1d9e0;        /* 区切り線（装飾だけに使う） */
+  --color-border-input: #6e7781;  /* 入力欄の枠（白の背景に対して 4.55:1） */
+  --color-focus: #0969da;
+
+  /* 主色と状態 */
+  --color-primary: #0969da;
+  --color-primary-hover: #0757b6;
+  --color-primary-soft: #ddf4ff;
+  --color-danger: #cf222e;
+  --color-danger-hover: #a40e26;
+  --color-danger-soft: #ffebe9;
+  --color-success: #1a7f37;
+  --color-success-soft: #dafbe1;
+  --color-warning: #9a6700;
+  --color-warning-soft: #fff8c5;
+  --color-milestone: #8250df;
+
+  --color-status-not-started: #59636e;
+  --color-status-in-progress: #0969da;
+  --color-status-on-hold: #9a6700;
+  --color-status-done: #1a7f37;
+  --color-status-cancelled: #424a53;
+
+  /* ガントの背景 */
+  --color-weekend: #f6f8fa;
+  --color-holiday: #fff1e5;
+  --color-today: #cf222e;
+  --color-actual-bar: #424a53;
+
+  /* タグの 8 色（背景と文字） */
+  --tag-gray-bg: #eaeef2;   --tag-gray-fg: #424a53;
+  --tag-blue-bg: #ddf4ff;   --tag-blue-fg: #0550ae;
+  --tag-green-bg: #dafbe1;  --tag-green-fg: #116329;
+  --tag-yellow-bg: #fff8c5; --tag-yellow-fg: #7d4e00;
+  --tag-orange-bg: #fff1e5; --tag-orange-fg: #953800;
+  --tag-red-bg: #ffebe9;    --tag-red-fg: #a40e26;
+  --tag-purple-bg: #fbefff; --tag-purple-fg: #6e40c9;
+  --tag-teal-bg: #d8f3f0;   --tag-teal-fg: #0a5c56;
+
+  /* 文字（OS の標準フォント。外部のフォントは読み込まない） */
+  --font-family: system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", Meiryo, "Noto Sans JP", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-size: 14px;
+  --font-size-small: 12px;
+  --font-size-large: 16px;
+  --font-size-title: 20px;
+  --line-height: 1.6;
+
+  /* 余白（4px の倍数） */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --radius: 6px;
+  --shadow: 0 1px 3px rgb(31 35 40 / 12%), 0 8px 24px rgb(66 74 83 / 12%);
+
+  /* 画面の枠 */
+  --topbar-height: 48px;
+  --sidenav-width: 200px;
+  --panel-width: 480px;
+}

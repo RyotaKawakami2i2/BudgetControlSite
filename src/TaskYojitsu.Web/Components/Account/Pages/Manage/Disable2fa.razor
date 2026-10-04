@@ -1,0 +1,43 @@
+@page "/account/manage/disable-2fa"
+
+@using TaskYojitsu.Infrastructure.Identity
+
+@inject SecurityChanges Changes
+
+<PageTitle>多要素認証の解除 - タスク予実管理</PageTitle>
+
+<h2>多要素認証の解除</h2>
+<div class="alert alert-warning" role="alert">
+    <p>解除すると、パスワードだけでログインできるようになります。認証アプリの登録とリカバリーコードは無効になります。</p>
+</div>
+<form @formname="disable-2fa" @onsubmit="OnSubmitAsync" method="post" class="form">
+    <AntiforgeryToken />
+    <div class="actions">
+        <button type="submit" class="btn btn-danger">解除する</button>
+        <a class="btn btn-link" href="/account/manage/two-factor">取り消す</a>
+    </div>
+</form>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        if (await LoadAsync(requireReauth: true) && !CurrentUser!.TwoFactorEnabled)
+        {
+            RedirectManager.RedirectTo("/account/manage/two-factor");
+        }
+    }
+
+    private async Task OnSubmitAsync()
+    {
+        if (CurrentUser is null || !Reauth.IsRecent(HttpContext))
+        {
+            return;
+        }
+
+        await UserManager.SetTwoFactorEnabledAsync(CurrentUser, false);
+        await UserManager.RemoveAuthenticationTokenAsync(CurrentUser, ProtectedUserStore.InternalLoginProvider, ProtectedUserStore.AuthenticatorKeyTokenName);
+        await UserManager.RemoveAuthenticationTokenAsync(CurrentUser, ProtectedUserStore.InternalLoginProvider, ProtectedUserStore.RecoveryCodeTokenName);
+        await Changes.AfterChangeAsync(HttpContext, CurrentUser, "auth.mfa.disabled", SessionRevokeReason.MfaChanged, "多要素認証を解除しました");
+        RedirectManager.RedirectToWithStatus("/account/manage/two-factor", "多要素認証を解除しました。", HttpContext);
+    }
+}

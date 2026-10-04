@@ -1,0 +1,84 @@
+@page "/account/manage/rename-passkey/{Id}"
+
+@using System.Buffers.Text
+@using TaskYojitsu.Domain.Rules
+
+<PageTitle>パスキーの名前 - タスク予実管理</PageTitle>
+
+<h2>パスキーの名前</h2>
+<StatusMessage Message="@message" />
+<p>どの端末のパスキーか分かる名前を付けてください（例: 会社の PC）。</p>
+<EditForm Model="Input" OnSubmit="RenameAsync" FormName="rename-passkey" method="post" class="form">
+    <div class="field">
+        <label for="name">名前</label>
+        <InputText @bind-Value="Input.Name" id="name" maxlength="50" required />
+    </div>
+    <div class="actions">
+        <button type="submit" class="btn btn-primary">保存する</button>
+        <a class="btn btn-link" href="/account/manage/passkeys">戻る</a>
+    </div>
+</EditForm>
+
+@code {
+    private UserPasskeyInfo? passkey;
+    private string? message;
+
+    [Parameter]
+    public string? Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Input ??= new();
+        if (!await LoadAsync(requireReauth: false))
+        {
+            return;
+        }
+
+        try
+        {
+            passkey = await UserManager.GetPasskeyAsync(CurrentUser!, Base64Url.DecodeFromChars(Id));
+        }
+        catch (FormatException)
+        {
+            passkey = null;
+        }
+
+        if (passkey is null)
+        {
+            RedirectManager.RedirectToWithStatus("/account/manage/passkeys", "エラー: パスキーが見つかりません。", HttpContext);
+            return;
+        }
+
+        if (HttpMethods.IsGet(HttpContext.Request.Method))
+        {
+            Input.Name = passkey.Name;
+        }
+    }
+
+    private async Task RenameAsync()
+    {
+        if (CurrentUser is null || passkey is null)
+        {
+            return;
+        }
+
+        var name = TextRules.NormalizeSingleLine(Input.Name);
+        if (name is null || TextRules.Length(name) > 50 || TextRules.HasForbiddenControlChars(name))
+        {
+            message = "エラー: 名前は 1〜50 字で入力してください。";
+            return;
+        }
+
+        passkey.Name = name;
+        await UserManager.AddOrUpdatePasskeyAsync(CurrentUser, passkey);
+        RedirectManager.RedirectToWithStatus("/account/manage/passkeys", "パスキーの名前を保存しました。", HttpContext);
+    }
+
+    private sealed class InputModel
+    {
+        public string? Name { get; set; }
+    }
+}

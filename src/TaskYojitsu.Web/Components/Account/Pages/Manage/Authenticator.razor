@@ -1,0 +1,167 @@
+@page "/account/manage/authenticator"
+
+@using System.Text
+@using System.Text.Encodings.Web
+@using Microsoft.AspNetCore.DataProtection
+@using Microsoft.Extensions.Options
+@using TaskYojitsu.Application.Common
+@using TaskYojitsu.Infrastructure.Identity
+
+@inject IUserStore<User> UserStore
+@inject IDataProtectionProvider DataProtection
+@inject SecurityChanges Changes
+@inject CookieSettings Cookies
+@inject TimeProvider Time
+@inject IOptions<SecurityOptions> Security
+@inject UrlEncoder UrlEncoder
+
+<PageTitle>認証アプリの設定 - タスク予実管理</PageTitle>
+
+@if (recoveryCodes is not null)
+{
+    <div class="alert alert-success" role="status">認証アプリを登録しました。</div>
+    <ShowRecoveryCodes RecoveryCodes="recoveryCodes" ContinueUrl="/account/manage/two-factor" />
+}
+else if (pendingKey is not null)
+{
+    <h2>認証アプリの設定</h2>
+    <StatusMessage Message="@message" />
+    <ol class="steps">
+        <li>
+            <p>スマートフォンに認証アプリ（Microsoft Authenticator、Google Authenticator など）を入れてください。</p>
+        </li>
+        <li>
+            <p>認証アプリで次の QR コードを読み取るか、キーを入力してください（空白と大文字・小文字は区別しません）。</p>
+            <div class="qr-box">@QrCodeSvg.Render(OtpUri(pendingKey))</div>
+            <p>キー: <kbd>@FormatKey(pendingKey)</kbd></p>
+        </li>
+        <li>
+            <p>認証アプリに表示された 6 桁のコードを入力して、登録を確定してください。</p>
+            <EditForm Model="Input" FormName="verify-authenticator" OnSubmit="OnVerifyAsync" method="post" class="form">
+                <div class="field">
+                    <label for="code">認証コード</label>
+                    <InputText @bind-Value="Input.Code" id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="7" required />
+                </div>
+                <div class="actions">
+                    <button type="submit" class="btn btn-primary">確定する</button>
+                </div>
+            </EditForm>
+        </li>
+    </ol>
+}
+
+@code {
+    private const string Issuer = "タスク予実管理";
+    private string? pendingKey;
+    private string[]? recoveryCodes;
+    private string? message;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = default!;
+
+    private ITimeLimitedDataProtector Protector =>
+        DataProtection.CreateProtector("TaskYojitsu.PendingAuthenticatorKey.v1", CurrentUser!.Id.ToString()).ToTimeLimitedDataProtector();
+
+    private string CookieName => Cookies.Flow + "-totp";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Input ??= new();
+        if (!await LoadAsync(requireReauth: true))
+        {
+            return;
+        }
+
+        // 表示した鍵で作ったコードを入力したときだけ登録を確定する。確定するまでは、鍵を暗号化した Cookie に置く
+        pendingKey = ReadPendingKey();
+        if (pendingKey is null)
+        {
+            pendingKey = UserManager.GenerateNewAuthenticatorKey();
+            HttpContext.Response.Cookies.Append(CookieName, Protector.Protect(pendingKey, TimeSpan.FromMinutes(10)),
+                Cookies.Options(httpOnly: true, SameSiteMode.Strict, TimeSpan.FromMinutes(10)));
+        }
+    }
+
+    private async Task OnVerifyAsync()
+    {
+        if (CurrentUser is null || pendingKey is null || !Reauth.IsRecent(HttpContext))
+        {
+            return;
+        }
+
+        var code = (Input.Code ?? "").Replace(" ", "", StringComparison.Ordinal).Replace("-", "", StringComparison.Ordinal);
+        var step = Match(pendingKey, code);
+        if (step is null)
+        {
+            message = "エラー: 認証コードが正しくありません。認証アプリの時刻が正しいかも確かめてください。";
+            return;
+        }
+
+        await ((IUserAuthenticatorKeyStore<User>)UserStore).SetAuthenticatorKeyAsync(CurrentUser, pendingKey, HttpContext.RequestAborted);
+        CurrentUser.LastTotpStep = step;
+        await UserManager.SetTwoFactorEnabledAsync(CurrentUser, true);
+        recoveryCodes = [.. await UserManager.GenerateNewTwoFactorRecoveryCodesAsync(CurrentUser, 10) ?? []];
+        HttpContext.Response.Cookies.Delete(CookieName, Cookies.Options(httpOnly: true, SameSiteMode.Strict));
+        await Changes.AfterChangeAsync(HttpContext, CurrentUser, "auth.mfa.enrolled", SessionRevokeReason.MfaChanged, "認証アプリを登録しました");
+    }
+
+    private string? ReadPendingKey()
+    {
+        var value = HttpContext.Request.Cookies[CookieName];
+        if (string.IsNullOrEmpty(value))
+        {
+            return null;
+        }
+
+        try
+        {
+            return Protector.Unprotect(value);
+        }
+        catch (System.Security.Cryptography.CryptographicException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>コードが鍵に合えば、その時間区分を返す（前後のずれは設定の範囲まで）。</summary>
+    private long? Match(string key, string code)
+    {
+        if (code.Length != 6 || !code.All(char.IsAsciiDigit))
+        {
+            return null;
+        }
+
+        var value = int.Parse(code, System.Globalization.CultureInfo.InvariantCulture);
+        var bytes = Base32.Decode(key);
+        var current = Time.GetUtcNow().ToUnixTimeSeconds() / 30;
+        var skew = Security.Value.Totp.AllowedSkewSteps;
+        for (var offset = -skew; offset <= skew; offset++)
+        {
+            if (OneTimeTotpProvider.Compute(bytes, current + offset) == value)
+            {
+                return current + offset;
+            }
+        }
+
+        return null;
+    }
+
+    private string OtpUri(string key) =>
+        $"otpauth://totp/{UrlEncoder.Encode(Issuer)}:{UrlEncoder.Encode(CurrentUser!.Email ?? "")}?secret={key}&issuer={UrlEncoder.Encode(Issuer)}&digits=6";
+
+    private static string FormatKey(string key)
+    {
+        var builder = new StringBuilder();
+        for (var i = 0; i < key.Length; i += 4)
+        {
+            builder.Append(key.AsSpan(i, Math.Min(4, key.Length - i))).Append(' ');
+        }
+
+        return builder.ToString().Trim().ToLowerInvariant();
+    }
+
+    private sealed class InputModel
+    {
+        public string? Code { get; set; }
+    }
+}

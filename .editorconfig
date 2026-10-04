@@ -1,0 +1,41 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{json,yml,yaml,ts,tsx,js,mjs,css,html,razor.css}]
+indent_size = 2
+
+[*.{csproj,props,targets,xml,slnx,config}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.cs]
+# using の並び
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = false
+# 名前空間はファイル単位
+csharp_style_namespace_declarations = file_scoped:warning
+# var の使い方
+csharp_style_var_for_built_in_types = true:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = true:suggestion
+# プライベートフィールドは _ で始める
+dotnet_naming_rule.private_fields_underscore.symbols = private_fields
+dotnet_naming_rule.private_fields_underscore.style = underscore_camel
+dotnet_naming_rule.private_fields_underscore.severity = suggestion
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+dotnet_naming_style.underscore_camel.required_prefix = _
+dotnet_naming_style.underscore_camel.capitalization = camel_case
+
+# EF Core が生成したマイグレーションは、整形の確認から外す
+[src/TaskYojitsu.Infrastructure/Persistence/Migrations/*.cs]
+generated_code = true

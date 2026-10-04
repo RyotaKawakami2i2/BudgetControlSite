@@ -1,0 +1,249 @@
+# CI（詳細設計書 12.5）。外部のアクションとイメージは、コミットのハッシュとダイジェストで固定する（12.6）。
+# 段階: 1 静的検査、2 ビルド、3 テスト、4 セキュリティ、5 イメージ、6 通しのテスト。
+# 段階 7（リリース。イメージの署名と登録）はタグを付けたときに別に行う。
+name: CI
+
+on:
+  # プルリクエストを作ったとき（opened）、そのブランチに変更をプッシュしたとき（synchronize）、
+  # 閉じたものを開き直したとき（reopened）、下書きを「レビュー可能」にしたとき（ready_for_review）に動く
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  # main に取り込んだ後にも、もう一度動かす
+  push:
+    branches: [main]
+  # Actions の画面から手で動かす
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# 同じプルリクエストに続けてプッシュしたときは、古い実行を止めて最新の変更だけをテストする（main では止めない）
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  DOTNET_NOLOGO: "1"
+  PNPM_VERSION: 12.7.0
+  NODE_VERSION: 24.21.0
+
+jobs:
+  web:
+    name: 画面（静的検査・ビルド・テスト）
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: pnpm を入れる
+        run: npm install --global --ignore-scripts pnpm@${{ env.PNPM_VERSION }}
+      - name: 依存パッケージ（ロックファイルどおり）
+        run: pnpm install --frozen-lockfile
+      - name: ESLint
+        run: pnpm run lint
+      - name: TypeScript の型検査
+        run: pnpm run typecheck
+      - name: 単体テスト（Vitest）
+        run: pnpm run test
+      - name: ビルド
+        run: pnpm run build
+      - name: 依存パッケージの脆弱性
+        run: pnpm audit --audit-level low
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: web-app
+          path: src/TaskYojitsu.Web/wwwroot/app
+          if-no-files-found: error
+          retention-days: 3
+
+  dotnet:
+    name: サーバー（静的検査・ビルド・テスト）
+    needs: web
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: web-app
+          path: src/TaskYojitsu.Web/wwwroot/app
+      - name: 依存パッケージ（ロックファイルどおり。脆弱性があればビルドが失敗する）
+        run: dotnet restore TaskYojitsu.slnx --locked-mode
+      - name: dotnet format の確認
+        run: dotnet format TaskYojitsu.slnx --verify-no-changes --no-restore
+      - name: ビルド（警告はエラー）
+        run: dotnet build TaskYojitsu.slnx --no-restore -c Release
+      - name: テスト（結合テストは Testcontainers で PostgreSQL 18 を起動する）
+        run: dotnet test --solution TaskYojitsu.slnx --no-build -c Release
+
+  codeql:
+    name: CodeQL（${{ matrix.language }}）
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [csharp, javascript-typescript]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: github/codeql-action/init@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+          queries: security-extended
+      - uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+        with:
+          category: /language:${{ matrix.language }}
+
+  dependency-review:
+    name: 依存の追加の確認
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: low
+          comment-summary-in-pr: on-failure
+
+  image:
+    name: イメージ（ビルド・脆弱性の検査・部品表）
+    needs: dotnet
+    runs-on: ubuntu-24.04
+    env:
+      TRIVY_IMAGE: aquasec/trivy:0.74.0@sha256:62b1e65e8869bc4b4c6aa4fa2b21595256c7c2f6018a9d9ad61caf87187c1969
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: イメージのビルド
+        run: docker build -f deploy/Dockerfile -t taskyojitsu:${{ github.sha }} .
+      - name: 脆弱性の検査（緊急・高があれば失敗）
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock "$TRIVY_IMAGE" \
+            image --scanners vuln --severity CRITICAL,HIGH --exit-code 1 --no-progress taskyojitsu:${{ github.sha }}
+      - name: 部品表（SBOM。CycloneDX）
+        run: |
+          mkdir -p sbom
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD/sbom:/out" "$TRIVY_IMAGE" \
+            image --format cyclonedx --output /out/taskyojitsu.cdx.json --no-progress taskyojitsu:${{ github.sha }}
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sbom
+          path: sbom/taskyojitsu.cdx.json
+          if-no-files-found: error
+
+  e2e:
+    name: 通しのテスト（Playwright）
+    needs: web
+    runs-on: ubuntu-24.04
+    services:
+      db:
+        image: postgres:18.6@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722
+        env:
+          POSTGRES_PASSWORD: ci-postgres-password
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres -h 127.0.0.1"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+      mailpit:
+        image: axllent/mailpit:v1.31.2@sha256:74d609a42ec279aa63c6b4622a6fa9b5408d1ad5b1d76a1c4be40a265ce0863d
+        ports: ["1025:1025", "8025:8025"]
+    env:
+      # 開発コンテナと同じ設定（値は CI 専用の固定値で、秘密情報ではない）
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__App: Host=localhost;Port=5432;Database=taskyojitsu;Username=tyj_app;Password=dev-app-password
+      ConnectionStrings__Owner: Host=localhost;Port=5432;Database=taskyojitsu;Username=tyj_owner;Password=dev-owner-password
+      Smtp__Host: localhost
+      # 全員が同じ送信元（localhost）から操作するため、送信元 IP ごとの回数制限だけ広げる
+      RateLimits__LoginByIp__Permits: "100"
+      RateLimits__ApiByIp__Permits: "100000"
+      E2E_PASSWORD: ci-e2e-river-under-cloudy-sky
+      E2E_BASE_URL: http://localhost:5080
+      E2E_MAILPIT_URL: http://localhost:8025
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: web-app
+          path: src/TaskYojitsu.Web/wwwroot/app
+      - name: DB のアカウントと DB を作る（開発コンテナと同じ）
+        env:
+          PGPASSWORD: ci-postgres-password
+        run: psql -h localhost -U postgres -v ON_ERROR_STOP=1 -f .devcontainer/db/init/01-roles.sql
+      - name: ビルド、マイグレーション、デモデータ
+        run: |
+          dotnet restore TaskYojitsu.slnx --locked-mode
+          dotnet build src/TaskYojitsu.Web --no-restore
+          dotnet build src/TaskYojitsu.Tool --no-restore
+          dotnet run --no-build --project src/TaskYojitsu.Tool -- migrate
+          dotnet run --no-build --project src/TaskYojitsu.Tool -- seed-demo --password "$E2E_PASSWORD"
+      - name: アプリを起動する
+        run: |
+          nohup dotnet run --no-build --project src/TaskYojitsu.Web --launch-profile http > app.log 2>&1 &
+          for i in $(seq 1 60); do curl -fsS http://localhost:5080/health/ready && exit 0; sleep 2; done
+          cat app.log; exit 1
+      - name: Playwright を入れる
+        working-directory: tests/e2e
+        run: |
+          npm install --global --ignore-scripts pnpm@${{ env.PNPM_VERSION }}
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps chromium
+      - name: 通しのテスト
+        working-directory: tests/e2e
+        run: pnpm test
+      - if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: e2e-report
+          path: |
+            tests/e2e/playwright-report
+            tests/e2e/test-results
+            app.log
+          retention-days: 7
+
+  result:
+    name: CI の結果
+    # ブランチの保護で「必須のチェック」に指定する場合は、このジョブだけを指定すればよい
+    if: always()
+    needs: [web, dotnet, codeql, dependency-review, image, e2e]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: すべてのジョブが成功したか
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "結果: $RESULTS"
+          for r in $RESULTS; do
+            # dependency-review はプルリクエストのときだけ動くため、skipped は成功として扱う
+            if [ "$r" != "success" ] && [ "$r" != "skipped" ]; then exit 1; fi
+          done

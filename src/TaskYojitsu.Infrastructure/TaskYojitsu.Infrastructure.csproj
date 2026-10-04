@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>TaskYojitsu.Infrastructure</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TaskYojitsu.Application\TaskYojitsu.Application.csproj" />
+    <ProjectReference Include="..\TaskYojitsu.Domain\TaskYojitsu.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+    <PackageReference Include="MailKit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Identity\Resources\common-passwords.txt.gz" LogicalName="TaskYojitsu.CommonPasswords" />
+    <!-- 組み込んだ一覧のライセンス（MIT）の表示を、配布物にも入れる -->
+    <None Include="Identity\Resources\NOTICE.md" Link="licenses\common-passwords-NOTICE.md" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TaskYojitsu.Web.Tests" />
+    <InternalsVisibleTo Include="TaskYojitsu.Application.Tests" />
+  </ItemGroup>
+
+</Project>

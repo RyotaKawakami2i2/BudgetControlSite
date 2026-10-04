@@ -1,0 +1,251 @@
+.shell {
+  display: grid;
+  grid-template-rows: var(--topbar-height) auto 1fr;
+  grid-template-columns: var(--sidenav-width) 1fr;
+  grid-template-areas:
+    "top top"
+    "banner banner"
+    "nav main";
+  height: 100%;
+}
+
+.shellCollapsed {
+  grid-template-columns: 56px 1fr;
+}
+
+.topbar {
+  grid-area: top;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0 var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
+  z-index: 20;
+}
+
+.brand {
+  font-weight: 700;
+  color: var(--color-text);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.teamSelect {
+  max-width: 240px;
+}
+
+.search {
+  flex: 1;
+  max-width: 420px;
+  display: flex;
+  gap: var(--space-1);
+}
+
+.search input {
+  flex: 1;
+  min-width: 0;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.bell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius);
+  color: var(--color-text);
+}
+
+.bell:hover {
+  background: var(--color-surface);
+}
+
+.unread {
+  position: absolute;
+  top: 2px;
+  right: 0;
+  min-width: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--color-danger);
+  color: #ffffff;
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+}
+
+.userMenu {
+  position: relative;
+}
+
+.userPanel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  min-width: 240px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: var(--space-2);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+}
+
+.userPanel a,
+.userPanel button {
+  text-align: left;
+  padding: var(--space-2);
+  border-radius: var(--radius);
+  color: var(--color-text);
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.userPanel a:hover,
+.userPanel button:hover {
+  background: var(--color-surface);
+}
+
+.userEmail {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  padding: 0 var(--space-2) var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: var(--space-1);
+}
+
+.banner {
+  grid-area: banner;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-warning-soft);
+  border-bottom: 1px solid var(--color-warning);
+}
+
+.banner p {
+  flex: 1;
+  margin: 0;
+}
+
+.nav {
+  grid-area: nav;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-surface);
+  overflow-y: auto;
+  padding: var(--space-2);
+}
+
+.nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.navLink {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius);
+  color: var(--color-text);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.navLink:hover {
+  background: var(--color-surface-strong);
+  color: var(--color-text);
+}
+
+.navActive {
+  background: var(--color-primary-soft);
+  font-weight: 600;
+}
+
+.navHeading {
+  margin: var(--space-3) var(--space-2) var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
+.main {
+  grid-area: main;
+  overflow: auto;
+  position: relative;
+  min-width: 0;
+  display: flex;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+}
+
+.panel {
+  width: var(--panel-width);
+  max-width: 100%;
+  border-left: 1px solid var(--color-border);
+  background: var(--color-bg);
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+@media (max-width: 1100px) {
+  .panel {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    box-shadow: var(--shadow);
+    z-index: 30;
+  }
+}
+
+@media (max-width: 768px) {
+  .shell,
+  .shellCollapsed {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "top"
+      "banner"
+      "main";
+  }
+
+  .nav {
+    display: none;
+  }
+
+  .navOpen {
+    display: block;
+    position: fixed;
+    top: var(--topbar-height);
+    left: 0;
+    bottom: 0;
+    width: 240px;
+    z-index: 40;
+    box-shadow: var(--shadow);
+  }
+
+  .teamSelect,
+  .search {
+    display: none;
+  }
+
+  .panel {
+    width: 100%;
+  }
+}

@@ -1,0 +1,21 @@
+<!-- テストのプロジェクトに共通の設定。リポジトリ直下の設定（詳細設計書 12.6）を引き継ぐ -->
+<Project>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <!-- xUnit v3 のテストは実行ファイルとして動く（Microsoft.Testing.Platform） -->
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <!-- テストのメソッド名は「条件_結果」の形で書くため、アンダースコアの指摘は出さない -->
+    <NoWarn>$(NoWarn);CA1707</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,331 @@
+/*
+ * 認証の画面（サーバー側で作る Blazor の画面）のスタイル。/app/account.css として配信する。
+ * 色や余白は業務の画面と同じ変数（tokens.css）を使う。
+ */
+@import "./base.css";
+
+.auth-shell {
+  min-height: 100%;
+  background: var(--color-surface);
+}
+
+.auth-header {
+  height: var(--topbar-height);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-5);
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.auth-brand {
+  font-weight: 700;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.auth-main {
+  padding: var(--space-6) var(--space-4);
+}
+
+.auth-card {
+  max-width: 440px;
+  margin: 0 auto;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-5);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: var(--space-3) 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.field label {
+  font-weight: 600;
+}
+
+.field input {
+  width: 100%;
+}
+
+.field-error {
+  color: var(--color-danger);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.actions .btn {
+  min-width: 120px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-height: 32px;
+  padding: var(--space-1) var(--space-4);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border-input);
+  background: var(--color-bg);
+  color: var(--color-text);
+  text-decoration: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn:hover {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background: var(--color-primary-hover);
+  color: #ffffff;
+}
+
+.btn-danger {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  color: #ffffff;
+}
+
+.btn-danger:hover {
+  background: var(--color-danger-hover);
+  color: #ffffff;
+}
+
+.btn-link {
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-primary);
+  font-weight: 400;
+}
+
+.btn-small {
+  min-height: 28px;
+  padding: 0 var(--space-2);
+  font-size: var(--font-size-small);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid var(--color-border);
+}
+
+.alert {
+  border-radius: var(--radius);
+  padding: var(--space-2) var(--space-3);
+  margin: var(--space-2) 0;
+  border: 1px solid;
+}
+
+.alert p:last-child {
+  margin-bottom: 0;
+}
+
+.alert-error {
+  background: var(--color-danger-soft);
+  border-color: var(--color-danger);
+  color: var(--color-danger-hover);
+}
+
+.alert-success {
+  background: var(--color-success-soft);
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+.alert-info {
+  background: var(--color-primary-soft);
+  border-color: var(--color-primary);
+  color: #0550ae;
+}
+
+.alert-warning {
+  background: var(--color-warning-soft);
+  border-color: var(--color-warning);
+  color: #7d4e00;
+}
+
+.auth-links,
+.auth-note {
+  margin-top: var(--space-3);
+}
+
+.auth-note,
+.hint {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-1) var(--space-3);
+}
+
+.summary dt {
+  font-weight: 600;
+}
+
+.summary dd {
+  margin: 0;
+}
+
+.choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.recovery-codes {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  gap: var(--space-2) var(--space-5);
+  font-size: var(--font-size-large);
+}
+
+.steps {
+  padding-left: var(--space-5);
+}
+
+.steps li {
+  margin-bottom: var(--space-4);
+}
+
+.qr-box {
+  width: 200px;
+  height: 200px;
+  margin: var(--space-2) 0;
+}
+
+.qr {
+  width: 100%;
+  height: 100%;
+}
+
+/* アカウント設定 */
+.manage {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: var(--space-5);
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.manage-nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-4);
+}
+
+.manage-nav li a {
+  display: block;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.manage-nav li a.active {
+  background: var(--color-primary-soft);
+  font-weight: 600;
+}
+
+.manage-title {
+  font-size: var(--font-size-large);
+}
+
+.manage-body {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-5);
+  min-width: 0;
+}
+
+.settings-list {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-2) var(--space-5);
+}
+
+.settings-list dt {
+  font-weight: 600;
+}
+
+.settings-list dd {
+  margin: 0;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--space-3) 0;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-2);
+}
+
+.inline-form {
+  display: inline-flex;
+  gap: var(--space-1);
+  margin: 0;
+}
+
+.badge {
+  display: inline-block;
+  font-size: var(--font-size-small);
+  padding: 0 var(--space-2);
+  border-radius: 999px;
+  background: var(--color-primary-soft);
+  color: #0550ae;
+}
+
+@media (max-width: 768px) {
+  .manage {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-main {
+    padding: var(--space-4) var(--space-2);
+  }
+}

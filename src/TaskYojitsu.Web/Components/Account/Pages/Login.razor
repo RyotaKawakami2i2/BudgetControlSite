@@ -1,0 +1,217 @@
+@page "/account/login"
+@attribute [AllowAnonymous]
+
+@using Microsoft.Extensions.Caching.Memory
+@using Microsoft.Extensions.Options
+@using TaskYojitsu.Application.Common
+
+@inject UserManager<User> UserManager
+@inject AppSignInManager SignInManager
+@inject IPasswordHasher<User> PasswordHasher
+@inject LoginEvents LoginEvents
+@inject AuthRateLimiter RateLimiter
+@inject IMemoryCache Cache
+@inject IOptions<SecurityOptions> Security
+@inject IdentityRedirectManager RedirectManager
+
+<PageTitle>ログイン - タスク予実管理</PageTitle>
+
+<div class="auth-card">
+    <h1>ログイン</h1>
+    @if (LoggedOut == "1")
+    {
+        <div class="alert alert-success" role="status">ログアウトしました。</div>
+    }
+    <StatusMessage Message="@errorMessage" />
+
+    <EditForm Model="Input" method="post" OnSubmit="LoginUser" FormName="login" class="form">
+        <div class="field">
+            <label for="email">メールアドレス</label>
+            <InputText @bind-Value="Input.Email" id="email" type="email" autocomplete="username" required />
+        </div>
+        <div class="field">
+            <label for="password">パスワード</label>
+            <InputText @bind-Value="Input.Password" id="password" type="password" autocomplete="current-password" />
+        </div>
+        <div class="actions">
+            <button type="submit" class="btn btn-primary">ログイン</button>
+        </div>
+        <div class="divider"><span>または</span></div>
+        <div class="actions">
+            <PasskeySubmit Operation="PasskeyOperation.Request" Name="Input.Passkey" class="btn btn-secondary">パスキーでログイン</PasskeySubmit>
+        </div>
+    </EditForm>
+
+    <p class="auth-links"><a href="/account/forgot-password">パスワードを忘れた場合</a></p>
+    <p class="auth-note">アカウントは管理者の招待で作成します。利用を始めるには、管理者に招待を依頼してください。</p>
+</div>
+
+@code {
+    private static string? dummyHash;
+    private string? errorMessage;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = default!;
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    [SupplyParameterFromQuery]
+    private string? LoggedOut { get; set; }
+
+    protected override void OnInitialized()
+    {
+        Input ??= new();
+        if (HttpMethods.IsGet(HttpContext.Request.Method) && HttpContext.User.Identity?.IsAuthenticated == true)
+        {
+            RedirectManager.RedirectTo(IdentityRedirectManager.SafeReturnUrl(ReturnUrl));
+        }
+    }
+
+    private async Task LoginUser()
+    {
+        var ip = ClientIp.Of(HttpContext)?.ToString() ?? "unknown";
+        if (!await RateLimiter.TryAcquireAsync(AuthLimit.LoginByIp, ip))
+        {
+            errorMessage = "エラー: " + AuthTexts.TooMany;
+            return;
+        }
+
+        if (!string.IsNullOrEmpty(Input.Passkey?.Error))
+        {
+            errorMessage = "エラー: " + Input.Passkey.Error;
+            return;
+        }
+
+        if (!string.IsNullOrEmpty(Input.Passkey?.CredentialJson))
+        {
+            await LoginWithPasskeyAsync();
+            return;
+        }
+
+        var email = (Input.Email ?? "").Trim();
+        if (email.Length == 0 || string.IsNullOrEmpty(Input.Password))
+        {
+            errorMessage = "エラー: " + AuthTexts.InvalidLogin;
+            return;
+        }
+
+        if (!await RateLimiter.TryAcquireAsync(AuthLimit.LoginByEmail, email))
+        {
+            errorMessage = "エラー: " + AuthTexts.TooMany;
+            return;
+        }
+
+        var user = await UserManager.FindByEmailAsync(email);
+        if (user is null)
+        {
+            // アカウントの有無を区別しない（同じ処理時間・同じ応答。NF-AUT-04）
+            dummyHash ??= PasswordHasher.HashPassword(new User(), Guid.NewGuid().ToString());
+            PasswordHasher.VerifyHashedPassword(new User(), dummyHash, Input.Password);
+            await LoginEvents.OnFailedAsync(email, null, "unknown_user");
+            if (CountUnknownFailure(email) >= Security.Value.Lockout.MaxFailedAttempts)
+            {
+                RedirectManager.RedirectTo("/account/lockout");
+                return;
+            }
+
+            errorMessage = "エラー: " + AuthTexts.InvalidLogin;
+            return;
+        }
+
+        var wasLocked = await UserManager.IsLockedOutAsync(user);
+        SignInManager.PendingMethod = AuthMethod.Password;
+        var result = await SignInManager.PasswordSignInAsync(user, Input.Password, isPersistent: false, lockoutOnFailure: true);
+        if (result.Succeeded)
+        {
+            await LoginEvents.OnSucceededAsync(HttpContext, user, AuthMethod.Password);
+            RedirectManager.RedirectTo(await AfterLoginAsync(user));
+        }
+        else if (result.RequiresTwoFactor)
+        {
+            RedirectManager.RedirectTo($"/account/login-2fa?returnUrl={Uri.EscapeDataString(IdentityRedirectManager.SafeReturnUrl(ReturnUrl))}");
+        }
+        else if (result.IsLockedOut)
+        {
+            await LoginEvents.OnFailedAsync(email, user.Id, "locked");
+            if (!wasLocked)
+            {
+                await LoginEvents.OnLockedAsync(user);
+            }
+
+            RedirectManager.RedirectTo("/account/lockout");
+        }
+        else
+        {
+            await LoginEvents.OnFailedAsync(email, user.Id, result.IsNotAllowed ? "not_allowed" : "password");
+            errorMessage = "エラー: " + AuthTexts.InvalidLogin;
+        }
+    }
+
+    private async Task LoginWithPasskeyAsync()
+    {
+        var json = Input.Passkey!.CredentialJson!;
+        SignInManager.PendingMethod = AuthMethod.Passkey;
+        SignInResult result;
+        try
+        {
+            // 本人確認（指紋・PIN など）を必須にしている（IdentityPasskeyOptions.UserVerificationRequirement）
+            result = await SignInManager.PasskeySignInAsync(json);
+        }
+        catch (InvalidOperationException)
+        {
+            // パスキーの手続きが始まっていない（画面が古いなど）
+            result = SignInResult.Failed;
+        }
+
+        var user = await PasskeyCredential.FindUserAsync(UserManager, json);
+        if (result.IsLockedOut)
+        {
+            RedirectManager.RedirectTo("/account/lockout");
+            return;
+        }
+
+        if (!result.Succeeded || user is null)
+        {
+            await LoginEvents.OnFailedAsync(null, user?.Id, "passkey");
+            errorMessage = "エラー: パスキーでログインできませんでした。";
+            return;
+        }
+
+        await LoginEvents.OnSucceededAsync(HttpContext, user, AuthMethod.Passkey);
+        RedirectManager.RedirectTo(IdentityRedirectManager.SafeReturnUrl(ReturnUrl));
+    }
+
+    /// <summary>ログインの後の移動先。管理者だけ多要素認証を必須にする設定のときは、設定の画面へ移る。</summary>
+    private async Task<string> AfterLoginAsync(User user)
+    {
+        if (Security.Value.Mfa.RequiredForAdmins && user.IsAdmin && !user.TwoFactorEnabled
+            && (await UserManager.GetPasskeysAsync(user)).Count == 0)
+        {
+            return "/account/setup-mfa?required=1";
+        }
+
+        return IdentityRedirectManager.SafeReturnUrl(ReturnUrl);
+    }
+
+    /// <summary>登録のないメールアドレスでの失敗を数える（ロックの画面を出すかどうかで、アカウントの有無が分からないようにする）。</summary>
+    private int CountUnknownFailure(string email)
+    {
+        var key = $"login-unknown:{email.ToUpperInvariant()}";
+        var count = Cache.TryGetValue<int>(key, out var current) ? current + 1 : 1;
+        Cache.Set(key, count, TimeSpan.FromMinutes(Security.Value.Lockout.Minutes));
+        return count;
+    }
+
+    private sealed class InputModel
+    {
+        public string? Email { get; set; }
+
+        public string? Password { get; set; }
+
+        public PasskeyInputModel? Passkey { get; set; }
+    }
+}

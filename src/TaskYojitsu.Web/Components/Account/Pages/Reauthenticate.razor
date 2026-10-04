@@ -1,0 +1,151 @@
+@page "/account/reauthenticate"
+@attribute [Authorize]
+
+@using TaskYojitsu.Application.Abstractions
+
+@inject UserManager<User> UserManager
+@inject AppSignInManager SignInManager
+@inject SessionRotation Rotation
+@inject AuthRateLimiter RateLimiter
+@inject IAuditWriter Audit
+@inject IdentityRedirectManager RedirectManager
+
+<PageTitle>本人確認 - タスク予実管理</PageTitle>
+
+<div class="auth-card">
+    <h1>本人確認</h1>
+    <div class="alert alert-info" role="status">@AuthTexts.ReauthRequired</div>
+    <StatusMessage Message="@message" />
+    @if (user is not null)
+    {
+        <EditForm Model="Input" FormName="reauthenticate" OnSubmit="OnSubmitAsync" method="post" class="form">
+            <input type="hidden" name="username" value="@user.Email" autocomplete="username" />
+            <div class="field">
+                <label for="password">パスワード</label>
+                <InputText @bind-Value="Input.Password" id="password" type="password" autocomplete="current-password" />
+            </div>
+            @if (user.TwoFactorEnabled)
+            {
+                <div class="field">
+                    <label for="code">認証コード</label>
+                    <InputText @bind-Value="Input.Code" id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="7" />
+                </div>
+            }
+            <div class="actions">
+                <button type="submit" class="btn btn-primary">確認する</button>
+            </div>
+            @if (hasPasskey)
+            {
+                <div class="divider"><span>または</span></div>
+                <div class="actions">
+                    <PasskeySubmit Operation="PasskeyOperation.Request" Name="Input.Passkey" class="btn btn-secondary">パスキーで確認する</PasskeySubmit>
+                </div>
+            }
+        </EditForm>
+        <p class="auth-links"><a href="@IdentityRedirectManager.SafeReturnUrl(ReturnUrl)">取り消す</a></p>
+    }
+</div>
+
+@code {
+    private User? user;
+    private bool hasPasskey;
+    private string? message;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = default!;
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Input ??= new();
+        user = await UserManager.GetUserAsync(HttpContext.User);
+        hasPasskey = user is not null && (await UserManager.GetPasskeysAsync(user)).Count > 0;
+    }
+
+    private async Task OnSubmitAsync()
+    {
+        if (user is null)
+        {
+            return;
+        }
+
+        if (!await RateLimiter.TryAcquireAsync(AuthLimit.ReauthByUser, user.Id.ToString()))
+        {
+            message = "エラー: " + AuthTexts.TooMany;
+            return;
+        }
+
+        AuthMethod? method = null;
+        if (!string.IsNullOrEmpty(Input.Passkey?.CredentialJson))
+        {
+            // パスキーで確認する（本人確認を必須にしている）
+            try
+            {
+                var assertion = await SignInManager.PerformPasskeyAssertionAsync(Input.Passkey.CredentialJson);
+                if (assertion.Succeeded && assertion.User?.Id == user.Id)
+                {
+                    await UserManager.AddOrUpdatePasskeyAsync(user, assertion.Passkey);
+                    method = AuthMethod.Passkey;
+                }
+            }
+            catch (InvalidOperationException)
+            {
+                method = null;
+            }
+        }
+        else if (!string.IsNullOrEmpty(Input.Password))
+        {
+            var check = await SignInManager.CheckPasswordSignInAsync(user, Input.Password, lockoutOnFailure: true);
+            if (check.Succeeded)
+            {
+                if (!user.TwoFactorEnabled)
+                {
+                    method = AuthMethod.Password;
+                }
+                else
+                {
+                    var code = (Input.Code ?? "").Replace(" ", "", StringComparison.Ordinal);
+                    if (await UserManager.VerifyTwoFactorTokenAsync(user, UserManager.Options.Tokens.AuthenticatorTokenProvider, code))
+                    {
+                        method = AuthMethod.PasswordTotp;
+                    }
+                    else
+                    {
+                        await UserManager.AccessFailedAsync(user);
+                    }
+                }
+            }
+            else if (check.IsLockedOut)
+            {
+                await Audit.WriteNowAsync(new AuditEntry("auth.reauth", AuditResult.Failure, "session", Detail: new { reason = "locked" }));
+                await SignInManager.SignOutAsync();
+                RedirectManager.RedirectTo("/account/lockout");
+                return;
+            }
+        }
+
+        if (method is null)
+        {
+            await Audit.WriteNowAsync(new AuditEntry("auth.reauth", AuditResult.Failure, "session"));
+            message = "エラー: " + AuthTexts.InvalidLogin;
+            return;
+        }
+
+        // 認証した時刻を更新し、セッション ID を作り直す
+        await Rotation.RotateAsync(HttpContext, method);
+        await Audit.WriteNowAsync(new AuditEntry("auth.reauth", TargetType: "session", Detail: new { method = method.Value.ToCode() }));
+        RedirectManager.RedirectTo(IdentityRedirectManager.SafeReturnUrl(ReturnUrl));
+    }
+
+    private sealed class InputModel
+    {
+        public string? Password { get; set; }
+        public string? Code { get; set; }
+        public PasskeyInputModel? Passkey { get; set; }
+    }
+}

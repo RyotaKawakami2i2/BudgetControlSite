@@ -1,0 +1,50 @@
+.scroll {
+  overflow-x: auto;
+  margin-bottom: var(--space-3);
+}
+
+.table {
+  min-width: 900px;
+}
+
+.taskCell {
+  min-width: 240px;
+  font-weight: 400;
+  background: var(--color-bg) !important;
+}
+
+.day {
+  text-align: center !important;
+  min-width: 84px;
+}
+
+.today {
+  background: var(--color-primary-soft) !important;
+}
+
+.cell {
+  text-align: center;
+}
+
+.cell input {
+  width: 72px;
+  text-align: right;
+}
+
+.error {
+  display: block;
+  color: var(--color-danger);
+  font-size: var(--font-size-small);
+}
+
+.over {
+  color: var(--color-danger);
+  font-weight: 700;
+}
+
+.locked {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--color-text-muted);
+}

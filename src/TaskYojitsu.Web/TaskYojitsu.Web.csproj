@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <RootNamespace>TaskYojitsu.Web</RootNamespace>
+    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+    <!-- 認証の画面は静的 SSR だけを使う（対話型の描画は使わない） -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TaskYojitsu.Application\TaskYojitsu.Application.csproj" />
+    <ProjectReference Include="..\TaskYojitsu.Infrastructure\TaskYojitsu.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="QRCoder" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TaskYojitsu.Web.Tests" />
+  </ItemGroup>
+
+</Project>

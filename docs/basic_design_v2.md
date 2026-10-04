@@ -6,7 +6,7 @@
 | 状態 | レビュー待ち |
 | 入力となる文書 | [要件定義書 1.4 案](requirements_v2.md)、[現行システム調査書](current_system_analysis.md) |
 | 次の文書 | [詳細設計書](detail_design_v2.md) |
-| 置き換える文書 | 旧 [basic_design.md](basic_design.md)（試作品の基本設計書。本書の確定後は参照しない） |
+| 置き換える文書 | 旧 basic_design.md（試作品の基本設計書。削除した。git の履歴に残る） |
 
 改訂履歴
 

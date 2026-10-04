@@ -30,6 +30,10 @@
 	"postCreateCommand": "bash .devcontainer/post-create.sh",
 	"customizations": {
 		"vscode": {
+			"settings": {
+				// pnpm のパッケージの保存場所（git の管理外）。エクスプローラーには出さない
+				"files.exclude": { "**/.pnpm-store": true }
+			},
 			"extensions": [
 				"ms-dotnettools.csharp",
 				"dbaeumer.vscode-eslint",

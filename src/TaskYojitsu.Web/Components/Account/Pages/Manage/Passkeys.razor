@@ -1,0 +1,170 @@
+@page "/account/manage/passkeys"
+
+@using System.Buffers.Text
+
+@inject AppSignInManager SignInManager
+@inject SecurityChanges Changes
+
+<PageTitle>パスキー - タスク予実管理</PageTitle>
+
+<h2>パスキー</h2>
+<StatusMessage />
+<p>パスキーは、指紋・顔・PIN などで本人を確かめてログインする方式です。パスキーだけで、パスワードと認証アプリを組み合わせたのと同じ強さになります。</p>
+
+@if (passkeys is { Count: > 0 })
+{
+    <table class="table">
+        <thead>
+            <tr><th scope="col">名前</th><th scope="col">登録日時</th><th scope="col"><span class="visually-hidden">操作</span></th></tr>
+        </thead>
+        <tbody>
+            @foreach (var passkey in passkeys)
+            {
+                var credentialId = Base64Url.EncodeToString(passkey.CredentialId);
+                <tr>
+                    <td>@(passkey.Name ?? "名前のないパスキー")</td>
+                    <td>@passkey.CreatedAt.ToOffset(TimeSpan.FromHours(9)).ToString("yyyy/MM/dd HH:mm", System.Globalization.CultureInfo.InvariantCulture)</td>
+                    <td>
+                        <form @formname="@($"passkey-{credentialId}")" @onsubmit="UpdatePasskeyAsync" method="post" class="inline-form">
+                            <AntiforgeryToken />
+                            <input type="hidden" name="CredentialId" value="@credentialId" />
+                            <button type="submit" name="Action" value="rename" class="btn btn-secondary btn-small">名前を変える</button>
+                            <button type="submit" name="Action" value="delete" class="btn btn-danger btn-small">削除</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>パスキーは登録されていません。</p>
+}
+
+<form @formname="add-passkey" @onsubmit="AddPasskeyAsync" method="post" class="form">
+    <AntiforgeryToken />
+    @if (passkeys is { Count: >= MaxPasskeys })
+    {
+        <p class="field-error">登録できるパスキーは @MaxPasskeys 個までです。追加するには、どれかを削除してください。</p>
+    }
+    else
+    {
+        <div class="actions">
+            <PasskeySubmit Operation="PasskeyOperation.Create" Name="Input" class="btn btn-primary">パスキーを追加する</PasskeySubmit>
+        </div>
+    }
+</form>
+
+@code {
+    private const int MaxPasskeys = 10;
+    private IList<UserPasskeyInfo>? passkeys;
+
+    [SupplyParameterFromForm]
+    private string? Action { get; set; }
+
+    [SupplyParameterFromForm]
+    private string? CredentialId { get; set; }
+
+    [SupplyParameterFromForm(FormName = "add-passkey")]
+    private PasskeyInputModel Input { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Input ??= new();
+
+        // 追加と削除には再認証が必要（詳細設計書 6.5）
+        if (await LoadAsync(requireReauth: !HttpMethods.IsGet(HttpContext.Request.Method)))
+        {
+            passkeys = await UserManager.GetPasskeysAsync(CurrentUser!);
+        }
+    }
+
+    private async Task AddPasskeyAsync()
+    {
+        if (CurrentUser is null)
+        {
+            return;
+        }
+
+        if (!Reauth.IsRecent(HttpContext))
+        {
+            RedirectManager.RedirectTo(ReauthGuard.RedirectPath(HttpContext));
+            return;
+        }
+
+        if (!string.IsNullOrEmpty(Input.Error))
+        {
+            RedirectManager.RedirectToWithStatus("/account/manage/passkeys", $"エラー: {Input.Error}", HttpContext);
+            return;
+        }
+
+        if (string.IsNullOrEmpty(Input.CredentialJson) || passkeys!.Count >= MaxPasskeys)
+        {
+            RedirectManager.RedirectToWithStatus("/account/manage/passkeys", "エラー: パスキーを登録できませんでした。", HttpContext);
+            return;
+        }
+
+        var attestation = await SignInManager.PerformPasskeyAttestationAsync(Input.CredentialJson);
+        if (!attestation.Succeeded)
+        {
+            RedirectManager.RedirectToWithStatus("/account/manage/passkeys", "エラー: パスキーを登録できませんでした。", HttpContext);
+            return;
+        }
+
+        var result = await UserManager.AddOrUpdatePasskeyAsync(CurrentUser, attestation.Passkey);
+        if (!result.Succeeded)
+        {
+            RedirectManager.RedirectToWithStatus("/account/manage/passkeys", "エラー: パスキーを登録できませんでした。", HttpContext);
+            return;
+        }
+
+        await Changes.AfterChangeAsync(HttpContext, CurrentUser, "auth.passkey.added", SessionRevokeReason.MfaChanged, "パスキーを追加しました");
+        RedirectManager.RedirectTo($"/account/manage/rename-passkey/{Base64Url.EncodeToString(attestation.Passkey.CredentialId)}");
+    }
+
+    private async Task UpdatePasskeyAsync()
+    {
+        if (CurrentUser is null)
+        {
+            return;
+        }
+
+        if (Action == "rename")
+        {
+            RedirectManager.RedirectTo($"/account/manage/rename-passkey/{CredentialId}");
+            return;
+        }
+
+        if (Action != "delete")
+        {
+            return;
+        }
+
+        if (!Reauth.IsRecent(HttpContext))
+        {
+            RedirectManager.RedirectTo(ReauthGuard.RedirectPath(HttpContext));
+            return;
+        }
+
+        byte[] id;
+        try
+        {
+            id = Base64Url.DecodeFromChars(CredentialId);
+        }
+        catch (FormatException)
+        {
+            return;
+        }
+
+        var result = await UserManager.RemovePasskeyAsync(CurrentUser, id);
+        if (!result.Succeeded)
+        {
+            RedirectManager.RedirectToWithStatus("/account/manage/passkeys", "エラー: パスキーを削除できませんでした。", HttpContext);
+            return;
+        }
+
+        await Changes.AfterChangeAsync(HttpContext, CurrentUser, "auth.passkey.removed", SessionRevokeReason.MfaChanged, "パスキーを削除しました");
+        RedirectManager.RedirectToWithStatus("/account/manage/passkeys", "パスキーを削除しました。", HttpContext);
+    }
+}

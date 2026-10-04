@@ -1,0 +1,89 @@
+# 本番の構成（詳細設計書 12.1）。deploy.sh から使う。<...> や ${...} は環境ごとの値で、/etc/tyj/deploy.env に書く。
+# 秘密情報はファイル（/etc/tyj/secrets）に置き、Docker の secrets で渡す。設定ファイルには書かない。
+# compose の secrets はファイルの権限をそのまま使うため、持ち主を root、グループをイメージの利用者 app（GID 1654）、権限を 0440 にする。
+name: taskyojitsu
+
+services:
+  proxy:
+    # nginx の安定版（版とダイジェストで固定する）
+    image: nginx:1.30.5-alpine@sha256:0985e772fb9f729e6fa0980da05fca5d9c468e870eed43071545afa9d2e27d94
+    ports: ["443:443", "80:80"]
+    read_only: true
+    tmpfs: ["/var/cache/nginx", "/var/run"]
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - /etc/tyj/tls:/etc/nginx/tls:ro
+    networks:
+      edge: {}
+      app:
+        # アプリは、この IP から来た要求に限って X-Forwarded-For を使う（Security:KnownProxies）
+        ipv4_address: 172.30.1.2
+    depends_on: [app]
+    restart: unless-stopped
+
+  app:
+    # 配備する版は deploy.sh が digest で指定する
+    image: "${TYJ_APP_IMAGE:?配備するイメージ（ghcr.io/<組織>/taskyojitsu@sha256:...）を指定してください}"
+    read_only: true
+    tmpfs: ["/tmp"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_ENVIRONMENT: Production
+      App__BaseUrl: "${TYJ_BASE_URL:?自サイトの URL（例 https://tasks.corp.example）を指定してください}"
+      Security__KnownProxies__0: 172.30.1.2
+      Smtp__Host: "${TYJ_SMTP_HOST:-mail.corp.example}"
+      Smtp__From: "${TYJ_SMTP_FROM:-no-reply@corp.example}"
+    secrets:
+      - db_app_connection
+      - db_ca
+      - dataprotection_cert
+      - dataprotection_cert_password
+      - recovery_code_pepper
+      - login_hint_pepper
+      - smtp_password
+    networks: [app, db, egress]
+    restart: unless-stopped
+    # シェルのないイメージのため、コンテナの中での状態確認は行わない（監視サーバーから nginx 経由で /health/ready を確かめる）
+
+  db:
+    # pgBackRest を加えた PostgreSQL 18 のイメージ（社内で作り、digest で固定する）
+    image: "${TYJ_DB_IMAGE:?DB のイメージ（pgBackRest を加えた PostgreSQL 18 の digest 付きの名前）を指定してください}"
+    volumes:
+      - /srv/tyj/pgdata:/var/lib/postgresql
+      - ./postgres:/etc/postgresql:ro
+      - /etc/tyj/db-tls:/etc/postgresql/tls:ro
+      - ./pgbackrest/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf:ro
+    command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+    networks: [db]
+    restart: unless-stopped
+
+secrets:
+  db_app_connection:
+    file: /etc/tyj/secrets/db_app_connection
+  db_ca:
+    file: /etc/tyj/secrets/db_ca
+  dataprotection_cert:
+    file: /etc/tyj/secrets/dataprotection_cert
+  dataprotection_cert_password:
+    file: /etc/tyj/secrets/dataprotection_cert_password
+  recovery_code_pepper:
+    file: /etc/tyj/secrets/recovery_code_pepper
+  login_hint_pepper:
+    file: /etc/tyj/secrets/login_hint_pepper
+  smtp_password:
+    file: /etc/tyj/secrets/smtp_password
+  # db_owner_connection（マイグレーション用）は常駐のコンテナには渡さず、deploy.sh がマイグレーションの実行のときだけ渡す
+
+networks:
+  edge: {}
+  app:
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.30.1.0/24
+  db:
+    internal: true
+  # アプリが社内メールサーバー、社内 DNS、時刻サーバーへ出るためのネットワーク。行き先はサーバーのファイアウォールで制限する
+  egress: {}

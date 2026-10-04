@@ -1,0 +1,98 @@
+@page "/account/login-2fa"
+@attribute [AllowAnonymous]
+
+@inject UserManager<User> UserManager
+@inject AppSignInManager SignInManager
+@inject LoginEvents LoginEvents
+@inject AuthRateLimiter RateLimiter
+@inject IdentityRedirectManager RedirectManager
+
+<PageTitle>認証コードの入力 - タスク予実管理</PageTitle>
+
+<div class="auth-card">
+    <h1>認証コードの入力</h1>
+    <StatusMessage Message="@message" />
+    <p>認証アプリに表示されている 6 桁のコードを入力してください。</p>
+    <EditForm Model="Input" FormName="login-2fa" OnSubmit="OnSubmitAsync" method="post" class="form">
+        <div class="field">
+            <label for="code">認証コード</label>
+            <InputText @bind-Value="Input.Code" id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="7" required />
+        </div>
+        <div class="actions">
+            <button type="submit" class="btn btn-primary">ログイン</button>
+        </div>
+    </EditForm>
+    <p class="auth-links">
+        認証アプリを使えない場合は、<a href="/account/login-recovery?returnUrl=@Uri.EscapeDataString(IdentityRedirectManager.SafeReturnUrl(ReturnUrl))">リカバリーコードでログイン</a>してください。
+    </p>
+</div>
+
+@code {
+    private string? message;
+    private User? user;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = default!;
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Input ??= new();
+
+        // パスワードの画面を通っていなければ（2 段階目を待っている状態がなければ）、ログインの画面へ戻る
+        user = await SignInManager.GetTwoFactorAuthenticationUserAsync();
+        if (user is null)
+        {
+            RedirectManager.RedirectTo("/account/login");
+        }
+    }
+
+    private async Task OnSubmitAsync()
+    {
+        if (user is null)
+        {
+            return;
+        }
+
+        if (!await RateLimiter.TryAcquireAsync(AuthLimit.SecondFactorByIp, ClientIp.Of(HttpContext)?.ToString() ?? "unknown"))
+        {
+            message = "エラー: " + AuthTexts.TooMany;
+            return;
+        }
+
+        var code = (Input.Code ?? "").Replace(" ", "", StringComparison.Ordinal).Replace("-", "", StringComparison.Ordinal);
+        var wasLocked = await UserManager.IsLockedOutAsync(user);
+        SignInManager.PendingMethod = AuthMethod.PasswordTotp;
+        var result = await SignInManager.TwoFactorAuthenticatorSignInAsync(code, isPersistent: false, rememberClient: false);
+        if (result.Succeeded)
+        {
+            await LoginEvents.OnSucceededAsync(HttpContext, user, AuthMethod.PasswordTotp);
+            RedirectManager.RedirectTo(IdentityRedirectManager.SafeReturnUrl(ReturnUrl));
+        }
+        else if (result.IsLockedOut)
+        {
+            await LoginEvents.OnFailedAsync(user.Email, user.Id, "locked");
+            if (!wasLocked)
+            {
+                await LoginEvents.OnLockedAsync(user);
+            }
+
+            RedirectManager.RedirectTo("/account/lockout");
+        }
+        else
+        {
+            await LoginEvents.OnFailedAsync(user.Email, user.Id, "totp");
+            message = "エラー: " + AuthTexts.InvalidLogin;
+        }
+    }
+
+    private sealed class InputModel
+    {
+        public string? Code { get; set; }
+    }
+}

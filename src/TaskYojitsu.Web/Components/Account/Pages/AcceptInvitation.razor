@@ -1,0 +1,116 @@
+@page "/account/accept-invitation"
+@attribute [AllowAnonymous]
+
+@using TaskYojitsu.Application.Accounts
+
+@inject InvitationService Invitations
+@inject AppSignInManager SignInManager
+@inject LoginEvents LoginEvents
+@inject FlowTokenCookie FlowToken
+@inject AuthRateLimiter RateLimiter
+@inject IdentityRedirectManager RedirectManager
+
+<PageTitle>招待の受諾 - タスク予実管理</PageTitle>
+
+<div class="auth-card">
+    <h1>利用を始める</h1>
+    @if (user is null)
+    {
+        <div class="alert alert-error" role="alert">@AuthTexts.LinkExpired</div>
+        <p>招待のリンクは 72 時間だけ有効で、1 回だけ使えます。管理者に招待の再送を依頼してください。</p>
+    }
+    else
+    {
+        <StatusMessage Message="@message" />
+        <p>@user.DisplayName さん、タスク予実管理システムへようこそ。ログインに使うパスワードを設定してください。</p>
+        <dl class="summary">
+            <dt>メールアドレス</dt>
+            <dd>@user.Email</dd>
+        </dl>
+        <PasswordHint />
+        <EditForm Model="Input" FormName="accept-invitation" OnSubmit="OnSubmitAsync" method="post" class="form">
+            <input type="hidden" name="username" value="@user.Email" autocomplete="username" />
+            <div class="field">
+                <label for="password">パスワード</label>
+                <InputText @bind-Value="Input.Password" id="password" type="password" autocomplete="new-password" required />
+            </div>
+            <div class="field">
+                <label for="confirm">パスワード（確認）</label>
+                <InputText @bind-Value="Input.Confirm" id="confirm" type="password" autocomplete="new-password" required />
+            </div>
+            <div class="actions">
+                <button type="submit" class="btn btn-primary">設定して始める</button>
+            </div>
+        </EditForm>
+    }
+</div>
+
+@code {
+    private const string Purpose = "invitation";
+    private User? user;
+    private string? token;
+    private string? message;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = default!;
+
+    [SupplyParameterFromQuery(Name = "token")]
+    private string? QueryToken { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Input ??= new();
+        if (!string.IsNullOrEmpty(QueryToken))
+        {
+            // リンクのトークンは Cookie に移し、トークンを含まない URL へ移る（詳細設計書 6.8）
+            if (await RateLimiter.TryAcquireAsync(AuthLimit.TokenByIp, ClientIp.Of(HttpContext)?.ToString() ?? "unknown"))
+            {
+                FlowToken.Store(HttpContext, Purpose, QueryToken);
+            }
+
+            RedirectManager.RedirectTo("/account/accept-invitation");
+            return;
+        }
+
+        token = FlowToken.Read(HttpContext, Purpose);
+        user = token is null ? null : await Invitations.FindUserByTokenAsync(token, HttpContext.RequestAborted);
+    }
+
+    private async Task OnSubmitAsync()
+    {
+        if (user is null || token is null)
+        {
+            return;
+        }
+
+        if (string.IsNullOrEmpty(Input.Password) || Input.Password != Input.Confirm)
+        {
+            message = "エラー: " + AuthTexts.PasswordMismatch;
+            return;
+        }
+
+        var (activated, result) = await Invitations.AcceptAsync(token, Input.Password, HttpContext.RequestAborted);
+        if (!result.Succeeded || activated is null)
+        {
+            message = "エラー: " + AuthTexts.ForPasswordErrors(result.Errors);
+            return;
+        }
+
+        FlowToken.Clear(HttpContext);
+        SignInManager.PendingMethod = AuthMethod.Password;
+        await SignInManager.SignInAsync(activated, isPersistent: false);
+
+        // 招待を受諾した直後のログインは、新しい端末として知らせない
+        await LoginEvents.OnSucceededAsync(HttpContext, activated, AuthMethod.Password, notifyNewDevice: false);
+        RedirectManager.RedirectTo("/account/setup-mfa");
+    }
+
+    private sealed class InputModel
+    {
+        public string? Password { get; set; }
+        public string? Confirm { get; set; }
+    }
+}

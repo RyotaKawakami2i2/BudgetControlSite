@@ -1,0 +1,54 @@
+@page "/account/manage"
+
+<PageTitle>アカウント設定 - タスク予実管理</PageTitle>
+
+<StatusMessage />
+@if (CurrentUser is not null)
+{
+    @if (!CurrentUser.TwoFactorEnabled && passkeyCount == 0)
+    {
+        <div class="alert alert-warning" role="status">@AuthTexts.MfaRecommended</div>
+    }
+
+    <h2>概要</h2>
+    <dl class="settings-list">
+        <dt>表示名</dt>
+        <dd>@CurrentUser.DisplayName <a href="/app/settings">変更する</a></dd>
+        <dt>メールアドレス</dt>
+        <dd>@CurrentUser.Email</dd>
+        <dt>パスワード</dt>
+        <dd><a href="/account/manage/change-password">変更する</a></dd>
+        <dt>認証アプリ</dt>
+        <dd>
+            @(CurrentUser.TwoFactorEnabled ? "✓ 設定済み" : "未設定")
+            <a href="/account/manage/two-factor">@(CurrentUser.TwoFactorEnabled ? "管理する" : "設定する")</a>
+        </dd>
+        @if (CurrentUser.TwoFactorEnabled)
+        {
+            <dt>リカバリーコード</dt>
+            <dd>残り @(recoveryCodes) 個</dd>
+        }
+        <dt>パスキー</dt>
+        <dd>@passkeyCount 個 <a href="/account/manage/passkeys">管理する</a></dd>
+        <dt>ログイン中の端末</dt>
+        <dd><a href="/account/manage/sessions">確認する</a></dd>
+        <dt>ログイン履歴</dt>
+        <dd><a href="/account/manage/login-history">確認する</a></dd>
+    </dl>
+}
+
+@code {
+    private int passkeyCount;
+    private int recoveryCodes;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!await LoadAsync(requireReauth: false))
+        {
+            return;
+        }
+
+        passkeyCount = (await UserManager.GetPasskeysAsync(CurrentUser!)).Count;
+        recoveryCodes = await UserManager.CountRecoveryCodesAsync(CurrentUser!);
+    }
+}

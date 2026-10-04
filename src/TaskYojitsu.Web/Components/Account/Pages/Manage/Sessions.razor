@@ -1,0 +1,113 @@
+@page "/account/manage/sessions"
+
+@using Microsoft.EntityFrameworkCore
+@using TaskYojitsu.Application.Abstractions
+@using TaskYojitsu.Application.Accounts
+@using TaskYojitsu.Application.Common
+@using TaskYojitsu.Infrastructure.Sessions
+
+@inject IAppDbContext Db
+@inject SessionRevoker Revoker
+@inject IAuditWriter Audit
+@inject BusinessClock Clock
+
+<PageTitle>ログイン中の端末 - タスク予実管理</PageTitle>
+
+<h2>ログイン中の端末</h2>
+<StatusMessage />
+<p>心当たりのない端末があれば、ログインを取り消し、パスワードを変更してください。</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">ブラウザ</th>
+            <th scope="col">IP アドレス</th>
+            <th scope="col">ログイン</th>
+            <th scope="col">最後の操作</th>
+            <th scope="col"><span class="visually-hidden">操作</span></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var session in sessions)
+        {
+            <tr>
+                <td>@LoginEvents.Browser(session.UserAgent) @if (session.Id == currentId) { <span class="badge">この端末</span> }</td>
+                <td>@session.Ip</td>
+                <td>@Format(session.CreatedAt)</td>
+                <td>@Format(session.LastSeenAt)</td>
+                <td>
+                    @if (session.Id != currentId)
+                    {
+                        <form @formname="@($"revoke-{session.Id}")" @onsubmit="RevokeAsync" method="post" class="inline-form">
+                            <AntiforgeryToken />
+                            <input type="hidden" name="SessionId" value="@session.Id" />
+                            <button type="submit" class="btn btn-secondary btn-small">ログインを取り消す</button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<form @formname="revoke-others" @onsubmit="RevokeOthersAsync" method="post" class="form">
+    <AntiforgeryToken />
+    <div class="actions">
+        <button type="submit" class="btn btn-secondary">この端末以外のログインをすべて取り消す</button>
+    </div>
+</form>
+<form method="post" action="/account/logout-all" class="form">
+    <AntiforgeryToken />
+    <div class="actions">
+        <button type="submit" class="btn btn-danger">すべての端末からログアウトする</button>
+    </div>
+</form>
+
+@code {
+    private List<UserSession> sessions = [];
+    private Guid? currentId;
+
+    [SupplyParameterFromForm]
+    private Guid? SessionId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!await LoadAsync(requireReauth: false))
+        {
+            return;
+        }
+
+        currentId = SessionInfo.From(HttpContext)?.Id;
+        var now = Clock.UtcNow;
+        sessions = await Db.UserSessions.AsNoTracking()
+            .Where(s => s.UserId == CurrentUser!.Id && s.RevokedAt == null && s.ExpiresAt > now)
+            .OrderByDescending(s => s.LastSeenAt)
+            .ToListAsync();
+    }
+
+    private async Task RevokeAsync()
+    {
+        if (CurrentUser is null || SessionId is not { } id || id == currentId)
+        {
+            return;
+        }
+
+        await Revoker.RevokeAsync(CurrentUser.Id, id, SessionRevokeReason.UserRevoked, HttpContext.RequestAborted);
+        await Audit.WriteNowAsync(new AuditEntry("auth.session.revoked", TargetType: "session", TargetId: id.ToString(), Detail: new { reason = "user_revoked" }));
+        RedirectManager.RedirectToWithStatus("/account/manage/sessions", "ログインを取り消しました。", HttpContext);
+    }
+
+    private async Task RevokeOthersAsync()
+    {
+        if (CurrentUser is null)
+        {
+            return;
+        }
+
+        var count = await Revoker.RevokeAllAsync(CurrentUser.Id, SessionRevokeReason.UserRevoked, currentId, HttpContext.RequestAborted);
+        await Audit.WriteNowAsync(new AuditEntry("auth.session.revoked", TargetType: "session", Detail: new { scope = "others", count }));
+        RedirectManager.RedirectToWithStatus("/account/manage/sessions", $"ほかの端末のログインを {count} 件取り消しました。", HttpContext);
+    }
+
+    private string Format(DateTime utc) => Clock.ToLocal(utc).ToString("yyyy/MM/dd HH:mm", System.Globalization.CultureInfo.InvariantCulture);
+}

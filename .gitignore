@@ -1,0 +1,39 @@
+# ビルドの成果物は管理しない（要件定義書 9.1、DEV-06）
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+TestResults/
+*.trx
+coverage/
+
+# 画面側
+node_modules/
+# pnpm のパッケージの保存場所（開発コンテナではリポジトリの直下にできる）
+.pnpm-store/
+web/dist/
+web/coverage/
+*.tsbuildinfo
+# Vite のビルド出力（アプリから配信する。CI で作る）
+src/TaskYojitsu.Web/wwwroot/app/
+
+# テスト
+tests/e2e/test-results/
+tests/e2e/playwright-report/
+
+# 秘密情報やローカルの設定
+.env
+.env.*
+*.pfx
+*.pem
+*.key
+secrets/
+
+# エディターと OS
+.idea/
+*.swp
+.DS_Store
+Thumbs.db

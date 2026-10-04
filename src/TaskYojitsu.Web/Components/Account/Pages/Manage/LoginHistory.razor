@@ -1,0 +1,92 @@
+@page "/account/manage/login-history"
+
+@using Microsoft.EntityFrameworkCore
+@using TaskYojitsu.Application.Abstractions
+@using TaskYojitsu.Application.Common
+
+@inject IAppDbContext Db
+@inject BusinessClock Clock
+
+<PageTitle>ログイン履歴 - タスク予実管理</PageTitle>
+
+<h2>ログイン履歴</h2>
+<p>直近 50 件のログインの記録です。</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">日時</th>
+            <th scope="col">結果</th>
+            <th scope="col">方式・理由</th>
+            <th scope="col">IP アドレス</th>
+            <th scope="col">ブラウザ</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var row in rows)
+        {
+            <tr>
+                <td>@Clock.ToLocal(row.OccurredAt).ToString("yyyy/MM/dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture)</td>
+                <td>@(row.Action == "auth.login.locked" ? "! ロック" : row.Result == AuditResult.Success ? "✓ 成功" : "× 失敗")</td>
+                <td>@Describe(row.Detail)</td>
+                <td>@row.Ip</td>
+                <td>@(row.UserAgent is null ? "" : LoginEvents.Browser(row.UserAgent))</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<AuditLog> rows = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!await LoadAsync(requireReauth: false))
+        {
+            return;
+        }
+
+        var id = CurrentUser!.Id.ToString();
+        rows = await Db.AuditLogs.AsNoTracking()
+            .Where(a => a.TargetType == "user" && a.TargetId == id && (a.Action == "auth.login" || a.Action == "auth.login.locked"))
+            .OrderByDescending(a => a.Id)
+            .Take(50)
+            .ToListAsync();
+    }
+
+    private static string Describe(string? detail)
+    {
+        if (detail is null)
+        {
+            return "";
+        }
+
+        using var doc = System.Text.Json.JsonDocument.Parse(detail);
+        if (doc.RootElement.TryGetProperty("method", out var method))
+        {
+            return method.GetString() switch
+            {
+                "password" => "パスワード",
+                "password_totp" => "パスワードと認証アプリ",
+                "password_recovery" => "パスワードとリカバリーコード",
+                "passkey" => "パスキー",
+                _ => "",
+            };
+        }
+
+        if (doc.RootElement.TryGetProperty("reason", out var reason))
+        {
+            return reason.GetString() switch
+            {
+                "password" => "パスワードの誤り",
+                "totp" => "認証コードの誤り",
+                "recovery_code" => "リカバリーコードの誤り",
+                "passkey" => "パスキーの失敗",
+                "locked" => "ロック中",
+                "not_allowed" => "ログインできない状態",
+                _ => "",
+            };
+        }
+
+        return "";
+    }
+}

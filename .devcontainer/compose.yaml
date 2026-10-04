@@ -21,6 +21,8 @@ services:
       ConnectionStrings__Owner: "Host=db;Port=5432;Database=taskyojitsu;Username=tyj_owner;Password=dev-owner-password"
       # 結合テスト用。開発コンテナでは、Testcontainers の代わりにこの DB を使う
       ConnectionStrings__Test: "Host=db;Port=5432;Database=taskyojitsu_test;Username=tyj_owner;Password=dev-owner-password"
+      # 結合テストのアプリは、本番と同じく権限を絞ったアカウントで接続する
+      ConnectionStrings__TestApp: "Host=db;Port=5432;Database=taskyojitsu_test;Username=tyj_app;Password=dev-app-password"
       Smtp__Host: mailpit
       Smtp__Port: "1025"
       Smtp__UseStartTls: "false"

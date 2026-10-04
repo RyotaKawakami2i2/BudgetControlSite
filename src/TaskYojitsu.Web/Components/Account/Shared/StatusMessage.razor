@@ -1,0 +1,30 @@
+@inject IdentityRedirectManager RedirectManager
+
+@if (!string.IsNullOrEmpty(DisplayMessage))
+{
+    <div class="alert @(IsError ? "alert-error" : "alert-success")" role="@(IsError ? "alert" : "status")">
+        @DisplayMessage
+    </div>
+}
+
+@code {
+    private string? messageFromCookie;
+
+    /// <summary>表示する文言。「エラー:」で始まるものは誤りとして表示する。</summary>
+    [Parameter]
+    public string? Message { get; set; }
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    private string? Raw => Message ?? messageFromCookie;
+
+    private bool IsError => Raw?.StartsWith("エラー:", StringComparison.Ordinal) == true;
+
+    private string? DisplayMessage => IsError ? Raw![4..].Trim() : Raw;
+
+    protected override void OnInitialized()
+    {
+        messageFromCookie = RedirectManager.TakeStatus(HttpContext);
+    }
+}

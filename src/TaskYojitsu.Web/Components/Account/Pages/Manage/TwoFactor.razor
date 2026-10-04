@@ -1,0 +1,47 @@
+@page "/account/manage/two-factor"
+
+<PageTitle>多要素認証 - タスク予実管理</PageTitle>
+
+<h2>多要素認証（認証アプリ）</h2>
+<StatusMessage />
+@if (CurrentUser is not null)
+{
+    @if (CurrentUser.TwoFactorEnabled)
+    {
+        <p>✓ 認証アプリを設定しています。ログインのときに、パスワードに続けて認証コードを入力します。</p>
+        @if (recoveryCodesLeft <= 3)
+        {
+            <div class="alert alert-warning" role="alert">@string.Format(System.Globalization.CultureInfo.InvariantCulture, AuthTexts.RecoveryCodesLow, recoveryCodesLeft)</div>
+        }
+        else
+        {
+            <p>リカバリーコードの残り: @recoveryCodesLeft 個</p>
+        }
+
+        <div class="choice-list">
+            <a class="btn btn-secondary" href="/account/manage/recovery-codes">リカバリーコードを再発行する</a>
+            <a class="btn btn-secondary" href="/account/manage/authenticator">認証アプリを登録し直す</a>
+            <a class="btn btn-danger" href="/account/manage/disable-2fa">多要素認証を解除する</a>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info" role="status">@AuthTexts.MfaRecommended</div>
+        <p>Microsoft Authenticator や Google Authenticator などの認証アプリで、30 秒ごとに変わる 6 桁のコードを使います。</p>
+        <div class="choice-list">
+            <a class="btn btn-primary" href="/account/manage/authenticator">認証アプリを設定する</a>
+        </div>
+    }
+}
+
+@code {
+    private int recoveryCodesLeft;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (await LoadAsync(requireReauth: false))
+        {
+            recoveryCodesLeft = await UserManager.CountRecoveryCodesAsync(CurrentUser!);
+        }
+    }
+}

@@ -25,4 +25,9 @@ if [ -f web/package.json ] && [ -f web/pnpm-lock.yaml ]; then
   (cd web && pnpm install --frozen-lockfile)
 fi
 
+# 通しのテスト（Playwright）の依存パッケージ。ブラウザは使うときに pnpm exec playwright install で入れる
+if [ -f tests/e2e/package.json ] && [ -f tests/e2e/pnpm-lock.yaml ]; then
+  (cd tests/e2e && pnpm install --frozen-lockfile)
+fi
+
 echo "== 準備ができました"

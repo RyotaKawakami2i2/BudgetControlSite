@@ -1,0 +1,20 @@
+@inherits LayoutComponentBase
+@layout AccountLayout
+
+<div class="manage">
+    <nav class="manage-nav" aria-label="アカウント設定">
+        <h1 class="manage-title">アカウント設定</h1>
+        <ul>
+            <li><NavLink href="/account/manage" Match="NavLinkMatch.All">概要</NavLink></li>
+            <li><NavLink href="/account/manage/change-password">パスワード</NavLink></li>
+            <li><NavLink href="/account/manage/two-factor">多要素認証</NavLink></li>
+            <li><NavLink href="/account/manage/passkeys">パスキー</NavLink></li>
+            <li><NavLink href="/account/manage/sessions">ログイン中の端末</NavLink></li>
+            <li><NavLink href="/account/manage/login-history">ログイン履歴</NavLink></li>
+        </ul>
+        <a class="manage-back" href="/app">業務の画面へ戻る</a>
+    </nav>
+    <section class="manage-body">
+        @Body
+    </section>
+</div>
