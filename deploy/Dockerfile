@@ -33,7 +33,7 @@ RUN dotnet publish src/TaskYojitsu.Web/TaskYojitsu.Web.csproj -c Release --no-re
     && dotnet publish src/TaskYojitsu.Tool/TaskYojitsu.Tool.csproj -c Release --no-restore -o /out/tool
 
 # ---------------------------------------------------------------- 実行用
-FROM mcr.microsoft.com/dotnet/aspnet:10.0.12-noble-chiseled@sha256:48e51f2f6798897be7ac4e775c049ed8fe60d3190f637e1f9c9dc7513efa659c
+FROM mcr.microsoft.com/dotnet/aspnet:10.0.14-noble-chiseled@sha256:c89a6a61f494f20a5ae302990e814627a8d91b332fd4a8e7c1707c2d4da9555d
 WORKDIR /app
 COPY --from=build /out/app ./
 COPY --from=build /out/tool /tool/
