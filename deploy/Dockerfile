@@ -15,7 +15,7 @@ COPY web/ ./
 RUN pnpm build
 
 # ---------------------------------------------------------------- サーバー（.NET）のビルド
-FROM mcr.microsoft.com/dotnet/sdk:10.0.401-noble@sha256:e70cdb7f80b0348f5cb85f19a8f670fca061f033d57eed12fa003d58b0e06317 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0.403-noble@sha256:de4fe90a98845d75910b9769662465c84de1a934665c431279d1382b2bddc02b AS build
 WORKDIR /src
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
 COPY global.json nuget.config Directory.Build.props Directory.Packages.props ./
