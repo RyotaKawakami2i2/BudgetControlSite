@@ -5,7 +5,7 @@
 # 実行用のイメージはシェルのない chiseled（root 以外の利用者 app で動く）。運用コマンドも同じイメージに入れる（/tool）。
 
 # ---------------------------------------------------------------- 画面（React）のビルド
-FROM node:24.21.0-trixie-slim@sha256:8ec5d7557396cfe32d21c3f9c13072355ceab22b584578ca4bb28af31120cffe AS web
+FROM node:26.12.0-trixie-slim@sha256:e556a144463cc8dc53afe8de6d2fa0db5c132fd39ffa232c17641bd40df2bf11 AS web
 WORKDIR /src/web
 RUN npm install --global --ignore-scripts pnpm@12.7.0
 COPY web/package.json web/pnpm-lock.yaml web/pnpm-workspace.yaml ./
